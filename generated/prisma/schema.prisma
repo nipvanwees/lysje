@@ -28,16 +28,17 @@ model Post {
 }
 
 model User {
-  id            String    @id
+  id            String     @id
   name          String //@db.Text
   email         String
-  emailVerified Boolean   @default(false)
+  emailVerified Boolean    @default(false)
   image         String? //@db.Text
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @default(now()) @updatedAt
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @default(now()) @updatedAt
   sessions      Session[]
   accounts      Account[]
   posts         Post[]
+  todoLists     TodoList[]
 
   @@unique([email])
   @@map("user")
@@ -86,4 +87,34 @@ model Verification {
   updatedAt  DateTime @default(now()) @updatedAt
 
   @@map("verification")
+}
+
+model TodoList {
+  id          String     @id @default(cuid())
+  name        String
+  description String? //@db.Text
+  icon        String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items       ListItem[]
+
+  @@index([userId])
+  @@map("todo_list")
+}
+
+model ListItem {
+  id          String    @id @default(cuid())
+  title       String
+  description String? //@db.Text
+  deadline    DateTime?
+  done        Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  todoListId  String
+  todoList    TodoList  @relation(fields: [todoListId], references: [id], onDelete: Cascade)
+
+  @@index([todoListId])
+  @@map("list_item")
 }
