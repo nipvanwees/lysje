@@ -25,6 +25,7 @@ export default function LoginPage() {
           password,
         });
         if (result.error) {
+          //@ts-expect-error set
           setError(result.error.message);
         } else {
           router.push("/");
@@ -37,6 +38,7 @@ export default function LoginPage() {
           name,
         });
         if (result.error) {
+          //@ts-expect-error set
           setError(result.error.message);
         } else {
           router.push("/");
@@ -83,7 +85,7 @@ export default function LoginPage() {
                 required={!isLogin}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-white/20 bg-white/10 px-3 py-2 text-white placeholder-gray-400 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20"
+                className="mt-1 block w-full rounded-md border border-white/20 bg-white/10 px-3 py-2 text-white placeholder-gray-400 focus:border-white/40 focus:ring-2 focus:ring-white/20 focus:outline-none"
                 placeholder="Your name"
               />
             </div>
@@ -100,7 +102,7 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-white/20 bg-white/10 px-3 py-2 text-white placeholder-gray-400 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20"
+              className="mt-1 block w-full rounded-md border border-white/20 bg-white/10 px-3 py-2 text-white placeholder-gray-400 focus:border-white/40 focus:ring-2 focus:ring-white/20 focus:outline-none"
               placeholder="you@example.com"
             />
           </div>
@@ -116,7 +118,7 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-white/20 bg-white/10 px-3 py-2 text-white placeholder-gray-400 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20"
+              className="mt-1 block w-full rounded-md border border-white/20 bg-white/10 px-3 py-2 text-white placeholder-gray-400 focus:border-white/40 focus:ring-2 focus:ring-white/20 focus:outline-none"
               placeholder="••••••••"
             />
           </div>
@@ -124,13 +126,9 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-white/10 px-4 py-2 font-semibold text-white transition hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full rounded-md bg-white/10 px-4 py-2 font-semibold text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {loading
-              ? "Please wait..."
-              : isLogin
-                ? "Sign In"
-                : "Sign Up"}
+            {loading ? "Please wait..." : isLogin ? "Sign In" : "Sign Up"}
           </button>
         </form>
 
@@ -141,7 +139,7 @@ export default function LoginPage() {
               setIsLogin(!isLogin);
               setError(null);
             }}
-            className="text-sm text-gray-300 hover:text-white underline"
+            className="text-sm text-gray-300 underline hover:text-white"
           >
             {isLogin
               ? "Don't have an account? Sign up"
@@ -152,4 +150,3 @@ export default function LoginPage() {
     </main>
   );
 }
-
