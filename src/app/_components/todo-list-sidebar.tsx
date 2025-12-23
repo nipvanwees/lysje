@@ -49,6 +49,21 @@ export function TodoListSidebar() {
           );
         })}
       </div>
+      <div className="pt-4 border-t border-[#252525]">
+        <Link
+          href="/settings"
+          className={`block w-full rounded px-3 py-2 text-left transition ${
+            pathname === "/settings"
+              ? "bg-[#1a1a1a] text-gray-100"
+              : "text-gray-400 hover:bg-[#141414] hover:text-gray-300"
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-lg">⚙️</span>
+            <span className="text-sm font-semibold">Settings</span>
+          </div>
+        </Link>
+      </div>
     </div>
   );
 }

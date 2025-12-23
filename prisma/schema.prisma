@@ -28,17 +28,20 @@ model Post {
 }
 
 model User {
-  id            String    @id
-  name          String //@db.Text
-  email         String
-  emailVerified Boolean   @default(false)
-  image         String? //@db.Text
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @default(now()) @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  posts         Post[]
-  todoLists     TodoList[]
+  id                String    @id
+  name              String //@db.Text
+  email             String
+  emailVerified     Boolean   @default(false)
+  image             String? //@db.Text
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @default(now()) @updatedAt
+  sessions          Session[]
+  accounts          Account[]
+  posts             Post[]
+  todoLists         TodoList[]
+  notificationTime  String? // Time in HH:mm format (e.g., "09:00")
+  notificationDays String? // Comma-separated days (0=Sunday, 1=Monday, etc.) e.g., "1,2,3,4,5"
+  timezone          String? // IANA timezone (e.g., "America/New_York")
 
   @@unique([email])
   @@map("user")

@@ -136,7 +136,10 @@ exports.Prisma.UserScalarFieldEnum = {
   emailVerified: 'emailVerified',
   image: 'image',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  notificationTime: 'notificationTime',
+  notificationDays: 'notificationDays',
+  timezone: 'timezone'
 };
 
 exports.Prisma.SessionScalarFieldEnum = {
@@ -216,7 +219,10 @@ exports.Prisma.UserOrderByRelevanceFieldEnum = {
   id: 'id',
   name: 'name',
   email: 'email',
-  image: 'image'
+  image: 'image',
+  notificationTime: 'notificationTime',
+  notificationDays: 'notificationDays',
+  timezone: 'timezone'
 };
 
 exports.Prisma.SessionOrderByRelevanceFieldEnum = {

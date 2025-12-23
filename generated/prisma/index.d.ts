@@ -2386,6 +2386,9 @@ export namespace Prisma {
     image: string | null
     createdAt: Date | null
     updatedAt: Date | null
+    notificationTime: string | null
+    notificationDays: string | null
+    timezone: string | null
   }
 
   export type UserMaxAggregateOutputType = {
@@ -2396,6 +2399,9 @@ export namespace Prisma {
     image: string | null
     createdAt: Date | null
     updatedAt: Date | null
+    notificationTime: string | null
+    notificationDays: string | null
+    timezone: string | null
   }
 
   export type UserCountAggregateOutputType = {
@@ -2406,6 +2412,9 @@ export namespace Prisma {
     image: number
     createdAt: number
     updatedAt: number
+    notificationTime: number
+    notificationDays: number
+    timezone: number
     _all: number
   }
 
@@ -2418,6 +2427,9 @@ export namespace Prisma {
     image?: true
     createdAt?: true
     updatedAt?: true
+    notificationTime?: true
+    notificationDays?: true
+    timezone?: true
   }
 
   export type UserMaxAggregateInputType = {
@@ -2428,6 +2440,9 @@ export namespace Prisma {
     image?: true
     createdAt?: true
     updatedAt?: true
+    notificationTime?: true
+    notificationDays?: true
+    timezone?: true
   }
 
   export type UserCountAggregateInputType = {
@@ -2438,6 +2453,9 @@ export namespace Prisma {
     image?: true
     createdAt?: true
     updatedAt?: true
+    notificationTime?: true
+    notificationDays?: true
+    timezone?: true
     _all?: true
   }
 
@@ -2521,6 +2539,9 @@ export namespace Prisma {
     image: string | null
     createdAt: Date
     updatedAt: Date
+    notificationTime: string | null
+    notificationDays: string | null
+    timezone: string | null
     _count: UserCountAggregateOutputType | null
     _min: UserMinAggregateOutputType | null
     _max: UserMaxAggregateOutputType | null
@@ -2548,6 +2569,9 @@ export namespace Prisma {
     image?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    notificationTime?: boolean
+    notificationDays?: boolean
+    timezone?: boolean
     sessions?: boolean | User$sessionsArgs<ExtArgs>
     accounts?: boolean | User$accountsArgs<ExtArgs>
     posts?: boolean | User$postsArgs<ExtArgs>
@@ -2565,9 +2589,12 @@ export namespace Prisma {
     image?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    notificationTime?: boolean
+    notificationDays?: boolean
+    timezone?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "email" | "emailVerified" | "image" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "email" | "emailVerified" | "image" | "createdAt" | "updatedAt" | "notificationTime" | "notificationDays" | "timezone", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     sessions?: boolean | User$sessionsArgs<ExtArgs>
     accounts?: boolean | User$accountsArgs<ExtArgs>
@@ -2592,6 +2619,9 @@ export namespace Prisma {
       image: string | null
       createdAt: Date
       updatedAt: Date
+      notificationTime: string | null
+      notificationDays: string | null
+      timezone: string | null
     }, ExtArgs["result"]["user"]>
     composites: {}
   }
@@ -2972,6 +3002,9 @@ export namespace Prisma {
     readonly image: FieldRef<"User", 'String'>
     readonly createdAt: FieldRef<"User", 'DateTime'>
     readonly updatedAt: FieldRef<"User", 'DateTime'>
+    readonly notificationTime: FieldRef<"User", 'String'>
+    readonly notificationDays: FieldRef<"User", 'String'>
+    readonly timezone: FieldRef<"User", 'String'>
   }
     
 
@@ -8276,7 +8309,10 @@ export namespace Prisma {
     emailVerified: 'emailVerified',
     image: 'image',
     createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
+    updatedAt: 'updatedAt',
+    notificationTime: 'notificationTime',
+    notificationDays: 'notificationDays',
+    timezone: 'timezone'
   };
 
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -8383,7 +8419,10 @@ export namespace Prisma {
     id: 'id',
     name: 'name',
     email: 'email',
-    image: 'image'
+    image: 'image',
+    notificationTime: 'notificationTime',
+    notificationDays: 'notificationDays',
+    timezone: 'timezone'
   };
 
   export type UserOrderByRelevanceFieldEnum = (typeof UserOrderByRelevanceFieldEnum)[keyof typeof UserOrderByRelevanceFieldEnum]
@@ -8548,6 +8587,9 @@ export namespace Prisma {
     image?: StringNullableFilter<"User"> | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
+    notificationTime?: StringNullableFilter<"User"> | string | null
+    notificationDays?: StringNullableFilter<"User"> | string | null
+    timezone?: StringNullableFilter<"User"> | string | null
     sessions?: SessionListRelationFilter
     accounts?: AccountListRelationFilter
     posts?: PostListRelationFilter
@@ -8562,6 +8604,9 @@ export namespace Prisma {
     image?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    notificationTime?: SortOrderInput | SortOrder
+    notificationDays?: SortOrderInput | SortOrder
+    timezone?: SortOrderInput | SortOrder
     sessions?: SessionOrderByRelationAggregateInput
     accounts?: AccountOrderByRelationAggregateInput
     posts?: PostOrderByRelationAggregateInput
@@ -8580,6 +8625,9 @@ export namespace Prisma {
     image?: StringNullableFilter<"User"> | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
+    notificationTime?: StringNullableFilter<"User"> | string | null
+    notificationDays?: StringNullableFilter<"User"> | string | null
+    timezone?: StringNullableFilter<"User"> | string | null
     sessions?: SessionListRelationFilter
     accounts?: AccountListRelationFilter
     posts?: PostListRelationFilter
@@ -8594,6 +8642,9 @@ export namespace Prisma {
     image?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    notificationTime?: SortOrderInput | SortOrder
+    notificationDays?: SortOrderInput | SortOrder
+    timezone?: SortOrderInput | SortOrder
     _count?: UserCountOrderByAggregateInput
     _max?: UserMaxOrderByAggregateInput
     _min?: UserMinOrderByAggregateInput
@@ -8610,6 +8661,9 @@ export namespace Prisma {
     image?: StringNullableWithAggregatesFilter<"User"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
+    notificationTime?: StringNullableWithAggregatesFilter<"User"> | string | null
+    notificationDays?: StringNullableWithAggregatesFilter<"User"> | string | null
+    timezone?: StringNullableWithAggregatesFilter<"User"> | string | null
   }
 
   export type SessionWhereInput = {
@@ -9040,6 +9094,9 @@ export namespace Prisma {
     image?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    notificationTime?: string | null
+    notificationDays?: string | null
+    timezone?: string | null
     sessions?: SessionCreateNestedManyWithoutUserInput
     accounts?: AccountCreateNestedManyWithoutUserInput
     posts?: PostCreateNestedManyWithoutCreatedByInput
@@ -9054,6 +9111,9 @@ export namespace Prisma {
     image?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    notificationTime?: string | null
+    notificationDays?: string | null
+    timezone?: string | null
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     posts?: PostUncheckedCreateNestedManyWithoutCreatedByInput
@@ -9068,6 +9128,9 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    notificationTime?: NullableStringFieldUpdateOperationsInput | string | null
+    notificationDays?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     sessions?: SessionUpdateManyWithoutUserNestedInput
     accounts?: AccountUpdateManyWithoutUserNestedInput
     posts?: PostUpdateManyWithoutCreatedByNestedInput
@@ -9082,6 +9145,9 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    notificationTime?: NullableStringFieldUpdateOperationsInput | string | null
+    notificationDays?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     posts?: PostUncheckedUpdateManyWithoutCreatedByNestedInput
@@ -9096,6 +9162,9 @@ export namespace Prisma {
     image?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    notificationTime?: string | null
+    notificationDays?: string | null
+    timezone?: string | null
   }
 
   export type UserUpdateManyMutationInput = {
@@ -9106,6 +9175,9 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    notificationTime?: NullableStringFieldUpdateOperationsInput | string | null
+    notificationDays?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type UserUncheckedUpdateManyInput = {
@@ -9116,6 +9188,9 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    notificationTime?: NullableStringFieldUpdateOperationsInput | string | null
+    notificationDays?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type SessionCreateInput = {
@@ -9689,6 +9764,9 @@ export namespace Prisma {
     image?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    notificationTime?: SortOrder
+    notificationDays?: SortOrder
+    timezone?: SortOrder
   }
 
   export type UserMaxOrderByAggregateInput = {
@@ -9699,6 +9777,9 @@ export namespace Prisma {
     image?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    notificationTime?: SortOrder
+    notificationDays?: SortOrder
+    timezone?: SortOrder
   }
 
   export type UserMinOrderByAggregateInput = {
@@ -9709,6 +9790,9 @@ export namespace Prisma {
     image?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    notificationTime?: SortOrder
+    notificationDays?: SortOrder
+    timezone?: SortOrder
   }
 
   export type BoolWithAggregatesFilter<$PrismaModel = never> = {
@@ -10437,6 +10521,9 @@ export namespace Prisma {
     image?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    notificationTime?: string | null
+    notificationDays?: string | null
+    timezone?: string | null
     sessions?: SessionCreateNestedManyWithoutUserInput
     accounts?: AccountCreateNestedManyWithoutUserInput
     todoLists?: TodoListCreateNestedManyWithoutUserInput
@@ -10450,6 +10537,9 @@ export namespace Prisma {
     image?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    notificationTime?: string | null
+    notificationDays?: string | null
+    timezone?: string | null
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     todoLists?: TodoListUncheckedCreateNestedManyWithoutUserInput
@@ -10479,6 +10569,9 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    notificationTime?: NullableStringFieldUpdateOperationsInput | string | null
+    notificationDays?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     sessions?: SessionUpdateManyWithoutUserNestedInput
     accounts?: AccountUpdateManyWithoutUserNestedInput
     todoLists?: TodoListUpdateManyWithoutUserNestedInput
@@ -10492,6 +10585,9 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    notificationTime?: NullableStringFieldUpdateOperationsInput | string | null
+    notificationDays?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     todoLists?: TodoListUncheckedUpdateManyWithoutUserNestedInput
@@ -10750,6 +10846,9 @@ export namespace Prisma {
     image?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    notificationTime?: string | null
+    notificationDays?: string | null
+    timezone?: string | null
     accounts?: AccountCreateNestedManyWithoutUserInput
     posts?: PostCreateNestedManyWithoutCreatedByInput
     todoLists?: TodoListCreateNestedManyWithoutUserInput
@@ -10763,6 +10862,9 @@ export namespace Prisma {
     image?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    notificationTime?: string | null
+    notificationDays?: string | null
+    timezone?: string | null
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     posts?: PostUncheckedCreateNestedManyWithoutCreatedByInput
     todoLists?: TodoListUncheckedCreateNestedManyWithoutUserInput
@@ -10792,6 +10894,9 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    notificationTime?: NullableStringFieldUpdateOperationsInput | string | null
+    notificationDays?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     accounts?: AccountUpdateManyWithoutUserNestedInput
     posts?: PostUpdateManyWithoutCreatedByNestedInput
     todoLists?: TodoListUpdateManyWithoutUserNestedInput
@@ -10805,6 +10910,9 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    notificationTime?: NullableStringFieldUpdateOperationsInput | string | null
+    notificationDays?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     posts?: PostUncheckedUpdateManyWithoutCreatedByNestedInput
     todoLists?: TodoListUncheckedUpdateManyWithoutUserNestedInput
@@ -10818,6 +10926,9 @@ export namespace Prisma {
     image?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    notificationTime?: string | null
+    notificationDays?: string | null
+    timezone?: string | null
     sessions?: SessionCreateNestedManyWithoutUserInput
     posts?: PostCreateNestedManyWithoutCreatedByInput
     todoLists?: TodoListCreateNestedManyWithoutUserInput
@@ -10831,6 +10942,9 @@ export namespace Prisma {
     image?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    notificationTime?: string | null
+    notificationDays?: string | null
+    timezone?: string | null
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     posts?: PostUncheckedCreateNestedManyWithoutCreatedByInput
     todoLists?: TodoListUncheckedCreateNestedManyWithoutUserInput
@@ -10860,6 +10974,9 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    notificationTime?: NullableStringFieldUpdateOperationsInput | string | null
+    notificationDays?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     sessions?: SessionUpdateManyWithoutUserNestedInput
     posts?: PostUpdateManyWithoutCreatedByNestedInput
     todoLists?: TodoListUpdateManyWithoutUserNestedInput
@@ -10873,6 +10990,9 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    notificationTime?: NullableStringFieldUpdateOperationsInput | string | null
+    notificationDays?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     posts?: PostUncheckedUpdateManyWithoutCreatedByNestedInput
     todoLists?: TodoListUncheckedUpdateManyWithoutUserNestedInput
@@ -10886,6 +11006,9 @@ export namespace Prisma {
     image?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    notificationTime?: string | null
+    notificationDays?: string | null
+    timezone?: string | null
     sessions?: SessionCreateNestedManyWithoutUserInput
     accounts?: AccountCreateNestedManyWithoutUserInput
     posts?: PostCreateNestedManyWithoutCreatedByInput
@@ -10899,6 +11022,9 @@ export namespace Prisma {
     image?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    notificationTime?: string | null
+    notificationDays?: string | null
+    timezone?: string | null
     sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
     accounts?: AccountUncheckedCreateNestedManyWithoutUserInput
     posts?: PostUncheckedCreateNestedManyWithoutCreatedByInput
@@ -10958,6 +11084,9 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    notificationTime?: NullableStringFieldUpdateOperationsInput | string | null
+    notificationDays?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     sessions?: SessionUpdateManyWithoutUserNestedInput
     accounts?: AccountUpdateManyWithoutUserNestedInput
     posts?: PostUpdateManyWithoutCreatedByNestedInput
@@ -10971,6 +11100,9 @@ export namespace Prisma {
     image?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    notificationTime?: NullableStringFieldUpdateOperationsInput | string | null
+    notificationDays?: NullableStringFieldUpdateOperationsInput | string | null
+    timezone?: NullableStringFieldUpdateOperationsInput | string | null
     sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
     accounts?: AccountUncheckedUpdateManyWithoutUserNestedInput
     posts?: PostUncheckedUpdateManyWithoutCreatedByNestedInput

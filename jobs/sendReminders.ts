@@ -15,6 +15,7 @@
 
 import { PrismaClient } from "../generated/prisma";
 import nodemailer from "nodemailer";
+import { zonedTimeToUtc, utcToZonedTime } from "date-fns-tz";
 
 const prisma = new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
@@ -178,6 +179,63 @@ function escapeHtml(text: string) {
     return text.replace(/[&<>"']/g, (m) => map[m] || m);
 }
 
+/**
+ * Check if it's time to send notification to a user based on their settings
+ * @param notificationTime Time in HH:mm format (e.g., "09:00")
+ * @param notificationDays Comma-separated days (0=Sunday, 1=Monday, etc.) e.g., "1,2,3,4,5"
+ * @param timezone IANA timezone (e.g., "America/New_York")
+ * @returns true if notification should be sent, false otherwise
+ */
+function shouldSendNotification(
+    notificationTime: string | null,
+    notificationDays: string | null,
+    timezone: string | null,
+): boolean {
+    // If user hasn't configured settings, don't send
+    if (!notificationTime || !notificationDays || !timezone) {
+        return false;
+    }
+
+    try {
+        // Get current time in UTC
+        const nowUtc = new Date();
+
+        // Convert to user's timezone
+        const nowInUserTz = utcToZonedTime(nowUtc, timezone);
+
+        // Get current day of week (0 = Sunday, 1 = Monday, etc.)
+        const currentDay = nowInUserTz.getDay();
+
+        // Parse notification days
+        const days = notificationDays.split(",").map(Number);
+        if (!days.includes(currentDay)) {
+            return false; // Not a notification day
+        }
+
+        // Parse notification time
+        const [hours, minutes] = notificationTime.split(":").map(Number);
+        const notificationHour = hours ?? 9;
+        const notificationMinute = minutes ?? 0;
+
+        // Get current time in user's timezone
+        const currentHour = nowInUserTz.getHours();
+        const currentMinute = nowInUserTz.getMinutes();
+
+        // Check if current time matches notification time (within 1 hour window)
+        // This allows the cron job to run hourly and still catch the notification time
+        const currentTimeInMinutes = currentHour * 60 + currentMinute;
+        const notificationTimeInMinutes = notificationHour * 60 + notificationMinute;
+        const timeDifference = Math.abs(currentTimeInMinutes - notificationTimeInMinutes);
+
+        // Send if within 1 hour of notification time
+        // This handles cases where cron runs at different times
+        return timeDifference <= 60;
+    } catch (error) {
+        console.error(`Error checking notification time for timezone ${timezone}:`, error);
+        return false;
+    }
+}
+
 // Send email to a user
 async function sendEmailToUser(
     userEmail: string,
@@ -230,6 +288,29 @@ async function getOpenTodos() {
         let emailsFailed = 0;
 
         for (const user of users) {
+            // Check if user has notification settings configured
+            if (!user.notificationTime || !user.notificationDays || !user.timezone) {
+                console.log(`⊘ Skipping ${user.email} - notification settings not configured`);
+                continue;
+            }
+
+            // Check if it's time to send notification based on user's timezone and preferences
+            if (
+                !shouldSendNotification(
+                    user.notificationTime,
+                    user.notificationDays,
+                    user.timezone,
+                )
+            ) {
+                const nowInUserTz = utcToZonedTime(new Date(), user.timezone);
+                const currentDay = nowInUserTz.getDay();
+                const days = user.notificationDays.split(",").map(Number);
+                console.log(
+                    `⊘ Skipping ${user.email} - not the right time/day (current: ${nowInUserTz.toLocaleString("en-US", { timeZone: user.timezone })} in ${user.timezone}, configured: ${user.notificationTime} on days [${days.join(",")}])`,
+                );
+                continue;
+            }
+
             // Group todos by list and filter out lists with no open items
             const todosByList = user.todoLists
                 .map((list) => ({
@@ -249,7 +330,10 @@ async function getOpenTodos() {
 
             // Count total open todos for logging
             const totalOpenTodos = todosByList.reduce((sum, { items }) => sum + items.length, 0);
-            console.log(`📧 Sending email to ${user.email} (${totalOpenTodos} open todo(s) across ${todosByList.length} list(s))`);
+            const nowInUserTz = utcToZonedTime(new Date(), user.timezone);
+            console.log(
+                `📧 Sending email to ${user.email} (${totalOpenTodos} open todo(s) across ${todosByList.length} list(s)) at ${nowInUserTz.toLocaleString("en-US", { timeZone: user.timezone })} in ${user.timezone}`,
+            );
 
             const success = await sendEmailToUser(user.email, user.name, todosByList);
             if (success) {
