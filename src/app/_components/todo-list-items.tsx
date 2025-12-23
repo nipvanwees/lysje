@@ -10,7 +10,89 @@ export function TodoListItems({ listId }: { listId: string }) {
   const utils = api.useUtils();
 
   const toggleItem = api.todo.toggleItem.useMutation({
-    onSuccess: () => {
+    onMutate: async ({ id }) => {
+      // Cancel any outgoing refetches
+      await utils.todo.getList.cancel({ id: listId });
+      await utils.todo.getCompletedItems.cancel({ listId });
+
+      // Snapshot the previous value
+      const previousList = utils.todo.getList.getData({ id: listId });
+      const previousCompleted = utils.todo.getCompletedItems.getData({ listId });
+
+      // Find the item in active list (items in active list are always done: false)
+      if (previousList) {
+        const item = previousList.items.find((item) => item.id === id);
+        if (item) {
+          // Item is being checked - remove it from active list
+          utils.todo.getList.setData({ id: listId }, (old) => {
+            if (!old) return old;
+            return {
+              ...old,
+              items: old.items.filter((i) => i.id !== id),
+            };
+          });
+
+          // Add it to completed list (most recent first)
+          const completedItem = {
+            ...item,
+            done: true,
+            updatedAt: new Date(),
+          };
+          utils.todo.getCompletedItems.setData({ listId }, (old) => {
+            if (!old) return [completedItem];
+            // Check if already exists (shouldn't happen, but be safe)
+            const exists = old.some((i) => i.id === id);
+            if (exists) return old;
+            return [completedItem, ...old];
+          });
+        }
+      }
+
+      // Check if item is in completed list (being unchecked)
+      if (previousCompleted) {
+        const item = previousCompleted.find((item) => item.id === id);
+        if (item) {
+          // Item is being unchecked - remove from completed list
+          utils.todo.getCompletedItems.setData({ listId }, (old) => {
+            if (!old) return old;
+            return old.filter((i) => i.id !== id);
+          });
+
+          // Add it back to active list
+          const activeItem = {
+            ...item,
+            done: false,
+          };
+          utils.todo.getList.setData({ id: listId }, (old) => {
+            if (!old) return old;
+            // Check if already exists (shouldn't happen, but be safe)
+            const exists = old.items.some((i) => i.id === id);
+            if (exists) return old;
+            return {
+              ...old,
+              items: [...old.items, activeItem].sort(
+                (a, b) =>
+                  new Date(a.createdAt).getTime() -
+                  new Date(b.createdAt).getTime()
+              ),
+            };
+          });
+        }
+      }
+
+      return { previousList, previousCompleted };
+    },
+    onError: (_err, _variables, context) => {
+      // Rollback on error
+      if (context?.previousList) {
+        utils.todo.getList.setData({ id: listId }, context.previousList);
+      }
+      if (context?.previousCompleted) {
+        utils.todo.getCompletedItems.setData({ listId }, context.previousCompleted);
+      }
+    },
+    onSettled: () => {
+      // Refetch to ensure consistency
       void utils.todo.getList.invalidate({ id: listId });
       void utils.todo.getAllLists.invalidate();
       void utils.todo.getCompletedItems.invalidate({ listId });
@@ -18,9 +100,46 @@ export function TodoListItems({ listId }: { listId: string }) {
   });
 
   const deleteItem = api.todo.deleteItem.useMutation({
-    onSuccess: () => {
+    onMutate: async ({ id }) => {
+      // Cancel any outgoing refetches
+      await utils.todo.getList.cancel({ id: listId });
+      await utils.todo.getCompletedItems.cancel({ listId });
+
+      // Snapshot the previous values
+      const previousList = utils.todo.getList.getData({ id: listId });
+      const previousCompleted = utils.todo.getCompletedItems.getData({ listId });
+
+      // Optimistically remove from active list
+      utils.todo.getList.setData({ id: listId }, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          items: old.items.filter((item) => item.id !== id),
+        };
+      });
+
+      // Optimistically remove from completed list if present
+      utils.todo.getCompletedItems.setData({ listId }, (old) => {
+        if (!old) return old;
+        return old.filter((item) => item.id !== id);
+      });
+
+      return { previousList, previousCompleted };
+    },
+    onError: (_err, _variables, context) => {
+      // Rollback on error
+      if (context?.previousList) {
+        utils.todo.getList.setData({ id: listId }, context.previousList);
+      }
+      if (context?.previousCompleted) {
+        utils.todo.getCompletedItems.setData({ listId }, context.previousCompleted);
+      }
+    },
+    onSettled: () => {
+      // Refetch to ensure consistency
       void utils.todo.getList.invalidate({ id: listId });
       void utils.todo.getAllLists.invalidate();
+      void utils.todo.getCompletedItems.invalidate({ listId });
     },
   });
 
@@ -155,7 +274,54 @@ function CompletedItemsSection({ listId }: { listId: string }) {
   const utils = api.useUtils();
 
   const toggleItem = api.todo.toggleItem.useMutation({
-    onSuccess: () => {
+    onMutate: async ({ id }) => {
+      // Cancel any outgoing refetches
+      await utils.todo.getList.cancel({ id: listId });
+      await utils.todo.getCompletedItems.cancel({ listId });
+
+      // Snapshot the previous values
+      const previousList = utils.todo.getList.getData({ id: listId });
+      const previousCompleted = utils.todo.getCompletedItems.getData({ listId });
+
+      // Find the item in completed list and toggle it optimistically
+      if (previousCompleted) {
+        const item = previousCompleted.find((item) => item.id === id);
+        if (item) {
+          // Item is being unchecked - remove from completed, add to active
+          utils.todo.getCompletedItems.setData({ listId }, (old) => {
+            if (!old) return old;
+            return old.filter((i) => i.id !== id);
+          });
+
+          // Add to active list
+          utils.todo.getList.setData({ id: listId }, (old) => {
+            if (!old) return old;
+            const newItem = { ...item, done: false };
+            return {
+              ...old,
+              items: [...old.items, newItem].sort(
+                (a, b) =>
+                  new Date(a.createdAt).getTime() -
+                  new Date(b.createdAt).getTime()
+              ),
+            };
+          });
+        }
+      }
+
+      return { previousList, previousCompleted };
+    },
+    onError: (_err, _variables, context) => {
+      // Rollback on error
+      if (context?.previousList) {
+        utils.todo.getList.setData({ id: listId }, context.previousList);
+      }
+      if (context?.previousCompleted) {
+        utils.todo.getCompletedItems.setData({ listId }, context.previousCompleted);
+      }
+    },
+    onSettled: () => {
+      // Refetch to ensure consistency
       void utils.todo.getList.invalidate({ id: listId });
       void utils.todo.getAllLists.invalidate();
       void utils.todo.getCompletedItems.invalidate({ listId });
@@ -163,7 +329,29 @@ function CompletedItemsSection({ listId }: { listId: string }) {
   });
 
   const deleteItem = api.todo.deleteItem.useMutation({
-    onSuccess: () => {
+    onMutate: async ({ id }) => {
+      // Cancel any outgoing refetches
+      await utils.todo.getCompletedItems.cancel({ listId });
+
+      // Snapshot the previous value
+      const previousCompleted = utils.todo.getCompletedItems.getData({ listId });
+
+      // Optimistically remove from completed list
+      utils.todo.getCompletedItems.setData({ listId }, (old) => {
+        if (!old) return old;
+        return old.filter((item) => item.id !== id);
+      });
+
+      return { previousCompleted };
+    },
+    onError: (_err, _variables, context) => {
+      // Rollback on error
+      if (context?.previousCompleted) {
+        utils.todo.getCompletedItems.setData({ listId }, context.previousCompleted);
+      }
+    },
+    onSettled: () => {
+      // Refetch to ensure consistency
       void utils.todo.getList.invalidate({ id: listId });
       void utils.todo.getAllLists.invalidate();
       void utils.todo.getCompletedItems.invalidate({ listId });
@@ -258,15 +446,82 @@ function CreateListItemForm({ listId }: { listId: string }) {
   const utils = api.useUtils();
 
   const createItem = api.todo.createItem.useMutation({
-    onSuccess: () => {
-      void utils.todo.getList.invalidate({ id: listId });
-      void utils.todo.getAllLists.invalidate();
+    onMutate: async (newItem) => {
+      // Cancel any outgoing refetches
+      await utils.todo.getList.cancel({ id: listId });
+
+      // Snapshot the previous value
+      const previousList = utils.todo.getList.getData({ id: listId });
+
+      // Generate a temporary ID for optimistic update
+      const tempId = `temp-${Date.now()}`;
+      const optimisticItem = {
+        id: tempId,
+        title: newItem.title,
+        description: newItem.description ?? null,
+        deadline: newItem.deadline ?? null,
+        done: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        todoListId: listId,
+      };
+
+      // Optimistically add the item
+      utils.todo.getList.setData({ id: listId }, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          items: [...old.items, optimisticItem],
+        };
+      });
+
+      // Clear form immediately
       setTitle("");
       setDescription("");
       setDeadline("");
       setShowAdvanced(false);
-      // Refocus the input after successful creation
       titleInputRef.current?.focus();
+
+      return { previousList, optimisticItem };
+    },
+    onError: (_err, _variables, context) => {
+      // Rollback on error
+      if (context?.previousList) {
+        utils.todo.getList.setData({ id: listId }, context.previousList);
+      }
+      // Restore form values on error
+      if (context?.optimisticItem) {
+        setTitle(context.optimisticItem.title);
+        if (context.optimisticItem.description) {
+          setDescription(context.optimisticItem.description);
+        }
+        if (context.optimisticItem.deadline) {
+          setDeadline(new Date(context.optimisticItem.deadline).toISOString().slice(0, 16));
+        }
+      }
+    },
+    onSuccess: (data, _variables, context) => {
+      // Replace the temporary item with the real one from server
+      utils.todo.getList.setData({ id: listId }, (old) => {
+        if (!old || !context?.optimisticItem) return old;
+        return {
+          ...old,
+          items: old.items.map((item) =>
+            item.id === context.optimisticItem.id
+              ? {
+                  ...data,
+                  createdAt: data.createdAt,
+                  updatedAt: data.updatedAt,
+                }
+              : item
+          ),
+        };
+      });
+    },
+    onSettled: () => {
+      // Refetch to ensure consistency
+      void utils.todo.getList.invalidate({ id: listId });
+      void utils.todo.getAllLists.invalidate();
     },
   });
 
