@@ -15,7 +15,10 @@
 
 import { PrismaClient } from "../generated/prisma";
 import nodemailer from "nodemailer";
-import { zonedTimeToUtc, utcToZonedTime } from "date-fns-tz";
+import { toZonedTime } from "date-fns-tz";
+
+const appName = "Lysje";
+const appUrl = "http://y40gocgwg4oww80go8gcggo8.46.224.121.159.sslip.io/";
 
 const prisma = new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
@@ -51,7 +54,7 @@ const getEmailTransporter = () => {
 };
 
 // Generate HTML email content for a user's open todos
-function generateEmailHTML(userName: string, todosByList: Array<{ list: { name: string; description: string | null }; items: Array<{ title: string; description: string | null; deadline: Date | null; createdAt: Date }> }>) {
+function generateEmailHTML(userName: string, todosByList: Array<{ list: { id: string; name: string; description: string | null }; items: Array<{ title: string; description: string | null; deadline: Date | null; createdAt: Date }> }>) {
     let html = `
 <!DOCTYPE html>
 <html>
@@ -61,7 +64,7 @@ function generateEmailHTML(userName: string, todosByList: Array<{ list: { name: 
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
         h1 { color: #2c3e50; }
-        .list-section { margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #3498db; }
+        .list-section { margin: 20px 0; padding: 15px; background-color: #f8f9fa; }
         .list-name { font-size: 18px; font-weight: bold; color: #2c3e50; margin-bottom: 10px; }
         .todo-item { margin: 10px 0; padding: 10px; background-color: white; border-radius: 4px; }
         .todo-title { font-weight: bold; color: #2c3e50; }
@@ -73,9 +76,9 @@ function generateEmailHTML(userName: string, todosByList: Array<{ list: { name: 
 </head>
 <body>
     <div class="container">
-        <h1>Your Open Todo Items</h1>
+        <h1><a href="${appUrl}">${appName}</a></h1>
         <p>Hi ${userName || "there"},</p>
-        <p>Here's a summary of your open todo items:</p>
+        <p>Your open todo items:</p>
     `;
 
     if (todosByList.length === 0) {
@@ -84,8 +87,7 @@ function generateEmailHTML(userName: string, todosByList: Array<{ list: { name: 
         for (const { list, items } of todosByList) {
             html += `
         <div class="list-section">
-            <div class="list-name">${list.name}</div>
-            ${list.description ? `<p style="color: #666; font-size: 14px;">${list.description}</p>` : ""}
+            <div class="list-name"><a href="${appUrl}/lists/${list.id}">${list.name}</a></div>
     `;
 
             if (items.length === 0) {
@@ -116,7 +118,7 @@ function generateEmailHTML(userName: string, todosByList: Array<{ list: { name: 
 
     html += `
         <p style="margin-top: 30px; color: #7f8c8d; font-size: 12px;">
-            This is an automated email from your todo list application.
+            This is an automated email from Lysje.
         </p>
     </div>
 </body>
@@ -201,7 +203,7 @@ function shouldSendNotification(
         const nowUtc = new Date();
 
         // Convert to user's timezone
-        const nowInUserTz = utcToZonedTime(nowUtc, timezone);
+        const nowInUserTz = toZonedTime(nowUtc, timezone);
 
         // Get current day of week (0 = Sunday, 1 = Monday, etc.)
         const currentDay = nowInUserTz.getDay();
@@ -240,7 +242,7 @@ function shouldSendNotification(
 async function sendEmailToUser(
     userEmail: string,
     userName: string,
-    todosByList: Array<{ list: { name: string; description: string | null }; items: Array<{ title: string; description: string | null; deadline: Date | null; createdAt: Date }> }>,
+    todosByList: Array<{ list: { id: string; name: string; description: string | null }; items: Array<{ title: string; description: string | null; deadline: Date | null; createdAt: Date }> }>,
 ) {
     const transporter = getEmailTransporter();
     const smtpFrom = process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@example.com";
@@ -302,7 +304,7 @@ async function getOpenTodos() {
                     user.timezone,
                 )
             ) {
-                const nowInUserTz = utcToZonedTime(new Date(), user.timezone);
+                const nowInUserTz = toZonedTime(new Date(), user.timezone);
                 const currentDay = nowInUserTz.getDay();
                 const days = user.notificationDays.split(",").map(Number);
                 console.log(
@@ -315,6 +317,7 @@ async function getOpenTodos() {
             const todosByList = user.todoLists
                 .map((list) => ({
                     list: {
+                        id: list.id,
                         name: list.name,
                         description: list.description,
                     },
@@ -330,7 +333,7 @@ async function getOpenTodos() {
 
             // Count total open todos for logging
             const totalOpenTodos = todosByList.reduce((sum, { items }) => sum + items.length, 0);
-            const nowInUserTz = utcToZonedTime(new Date(), user.timezone);
+            const nowInUserTz = toZonedTime(new Date(), user.timezone);
             console.log(
                 `📧 Sending email to ${user.email} (${totalOpenTodos} open todo(s) across ${todosByList.length} list(s)) at ${nowInUserTz.toLocaleString("en-US", { timeZone: user.timezone })} in ${user.timezone}`,
             );
