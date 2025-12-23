@@ -18,7 +18,7 @@ import nodemailer from "nodemailer";
 import { toZonedTime } from "date-fns-tz";
 
 const appName = "Lysje";
-const appUrl = "http://y40gocgwg4oww80go8gcggo8.46.224.121.159.sslip.io/";
+const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://lysje.nvanwees.nl/";
 
 // Set to true to bypass time/day checks and send to all users with settings (for testing)
 const TEST_MODE = process.env.TEST_MODE === "true";
@@ -105,7 +105,7 @@ function generateEmailHTML(userName: string, todosByList: Array<{ list: { id: st
         for (const { list, items } of todosByList) {
             html += `
         <div class="list-section">
-            <div class="list-name"><a href="${appUrl}/lists/${list.id}">${list.name}</a></div>
+            <div class="list-name"><a href="${appUrl}lists/${list.id}">${list.name}</a></div>
     `;
 
             if (items.length === 0) {
@@ -279,7 +279,7 @@ async function sendEmailToUser(
                 "X-Priority": "3",
                 "X-MSMail-Priority": "Normal",
                 "Importance": "normal",
-                "List-Unsubscribe": `<${appUrl}/settings>`,
+                "List-Unsubscribe": `<${appUrl}settings>`,
             },
             // Add reply-to for better deliverability
             replyTo: smtpFrom,
