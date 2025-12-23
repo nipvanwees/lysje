@@ -19,7 +19,7 @@ export const todoRouter = createTRPCRouter({
     });
   }),
 
-  // Get a single todo list with items
+  // Get a single todo list with items (only active items)
   getList: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
@@ -30,6 +30,7 @@ export const todoRouter = createTRPCRouter({
         },
         include: {
           items: {
+            where: { done: false },
             orderBy: { createdAt: "asc" },
           },
         },
@@ -40,6 +41,31 @@ export const todoRouter = createTRPCRouter({
       }
 
       return list;
+    }),
+
+  // Get completed items for a list (lazy loaded, ordered by when they were completed)
+  getCompletedItems: protectedProcedure
+    .input(z.object({ listId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      // Verify ownership of the todo list
+      const list = await ctx.db.todoList.findFirst({
+        where: {
+          id: input.listId,
+          userId: ctx.session.user.id,
+        },
+      });
+
+      if (!list) {
+        throw new Error("Todo list not found");
+      }
+
+      return ctx.db.listItem.findMany({
+        where: {
+          todoListId: input.listId,
+          done: true,
+        },
+        orderBy: { updatedAt: "desc" }, // Most recently completed first
+      });
     }),
 
   // Create a new todo list

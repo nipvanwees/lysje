@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
 
@@ -13,6 +13,7 @@ export function TodoListItems({ listId }: { listId: string }) {
     onSuccess: () => {
       void utils.todo.getList.invalidate({ id: listId });
       void utils.todo.getAllLists.invalidate();
+      void utils.todo.getCompletedItems.invalidate({ listId });
     },
   });
 
@@ -67,20 +68,147 @@ export function TodoListItems({ listId }: { listId: string }) {
         </div>
       </div>
 
-      <CreateListItemForm listId={listId} />
-
       <div className="space-y-2">
         {list.items.length === 0 ? (
-          <p className="text-center text-sm text-gray-600">No items yet. Add one above!</p>
+          <p className="text-center text-sm text-gray-600">No active items. Add one below!</p>
         ) : (
           list.items.map((item) => (
+            <TodoItem
+              key={item.id}
+              item={item}
+              onToggle={() => toggleItem.mutate({ id: item.id })}
+              onDelete={() => deleteItem.mutate({ id: item.id })}
+              isDeleting={deleteItem.isPending}
+            />
+          ))
+        )}
+      </div>
+
+      <CreateListItemForm listId={listId} />
+
+      <CompletedItemsSection listId={listId} />
+    </div>
+  );
+}
+
+function TodoItem({
+  item,
+  onToggle,
+  onDelete,
+  isDeleting,
+}: {
+  item: {
+    id: string;
+    title: string;
+    description: string | null;
+    deadline: Date | null;
+    done: boolean;
+  };
+  onToggle: () => void;
+  onDelete: () => void;
+  isDeleting: boolean;
+}) {
+  return (
+    <div className="rounded border border-[#1f1f1f] bg-[#141414] p-4">
+      <div className="flex items-start gap-3">
+        <input
+          type="checkbox"
+          checked={item.done}
+          onChange={onToggle}
+          className="mt-1 h-5 w-5 cursor-pointer rounded border-[#333] bg-[#0f0f0f] text-gray-400 focus:ring-0"
+        />
+        <div className="flex-1">
+          <h3 className="font-semibold text-gray-200">{item.title}</h3>
+          {item.description && (
+            <p className="mt-1 text-sm text-gray-500">{item.description}</p>
+          )}
+          {item.deadline && (
+            <p
+              className={`mt-1 text-xs ${
+                new Date(item.deadline) < new Date()
+                  ? "text-red-500"
+                  : "text-gray-600"
+              }`}
+            >
+              Deadline: {new Date(item.deadline).toLocaleDateString()}
+            </p>
+          )}
+        </div>
+        <button
+          onClick={onDelete}
+          className="text-gray-600 hover:text-gray-400"
+          disabled={isDeleting}
+        >
+          ×
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function CompletedItemsSection({ listId }: { listId: string }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const { data: completedItems, isLoading } = api.todo.getCompletedItems.useQuery(
+    { listId },
+    { enabled: isExpanded }, // Only fetch when expanded
+  );
+  const utils = api.useUtils();
+
+  const toggleItem = api.todo.toggleItem.useMutation({
+    onSuccess: () => {
+      void utils.todo.getList.invalidate({ id: listId });
+      void utils.todo.getAllLists.invalidate();
+      void utils.todo.getCompletedItems.invalidate({ listId });
+    },
+  });
+
+  const deleteItem = api.todo.deleteItem.useMutation({
+    onSuccess: () => {
+      void utils.todo.getList.invalidate({ id: listId });
+      void utils.todo.getAllLists.invalidate();
+      void utils.todo.getCompletedItems.invalidate({ listId });
+    },
+  });
+
+  if (!isExpanded) {
+    return (
+      <button
+        onClick={() => setIsExpanded(true)}
+        className="w-full rounded border border-[#1a1a1a] bg-[#0f0f0f] px-3 py-2 text-left text-sm text-gray-500 transition hover:border-[#252525] hover:text-gray-400"
+      >
+        Show completed items
+      </button>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-gray-500">
+          Completed
+          {completedItems && completedItems.length > 0 && (
+            <span className="ml-2 text-xs text-gray-600">
+              ({completedItems.length})
+            </span>
+          )}
+        </h3>
+        <button
+          onClick={() => setIsExpanded(false)}
+          className="text-xs text-gray-600 hover:text-gray-400"
+        >
+          Hide
+        </button>
+      </div>
+      {isLoading ? (
+        <p className="text-center text-sm text-gray-600">Loading completed items...</p>
+      ) : !completedItems || completedItems.length === 0 ? (
+        <p className="text-center text-sm text-gray-600">No completed items</p>
+      ) : (
+        <div className="space-y-2">
+          {completedItems.map((item) => (
             <div
               key={item.id}
-              className={`rounded border p-4 ${
-                item.done
-                  ? "border-[#1a1a1a] bg-[#0f0f0f]"
-                  : "border-[#1f1f1f] bg-[#141414]"
-              }`}
+              className="rounded border border-[#1a1a1a] bg-[#0f0f0f] p-4 opacity-75"
             >
               <div className="flex items-start gap-3">
                 <input
@@ -90,35 +218,20 @@ export function TodoListItems({ listId }: { listId: string }) {
                   className="mt-1 h-5 w-5 cursor-pointer rounded border-[#333] bg-[#0f0f0f] text-gray-400 focus:ring-0"
                 />
                 <div className="flex-1">
-                  <h3
-                    className={`font-semibold ${
-                      item.done ? "line-through text-gray-600" : "text-gray-200"
-                    }`}
-                  >
+                  <h3 className="font-semibold line-through text-gray-600">
                     {item.title}
                   </h3>
                   {item.description && (
-                    <p
-                      className={`mt-1 text-sm ${
-                        item.done ? "text-gray-600" : "text-gray-500"
-                      }`}
-                    >
-                      {item.description}
-                    </p>
+                    <p className="mt-1 text-sm text-gray-600">{item.description}</p>
                   )}
                   {item.deadline && (
-                    <p
-                      className={`mt-1 text-xs ${
-                        item.done
-                          ? "text-gray-600"
-                          : new Date(item.deadline) < new Date()
-                            ? "text-red-500"
-                            : "text-gray-600"
-                      }`}
-                    >
+                    <p className="mt-1 text-xs text-gray-600">
                       Deadline: {new Date(item.deadline).toLocaleDateString()}
                     </p>
                   )}
+                  <p className="mt-1 text-xs text-gray-600">
+                    Completed: {new Date(item.updatedAt).toLocaleDateString()}
+                  </p>
                 </div>
                 <button
                   onClick={() => deleteItem.mutate({ id: item.id })}
@@ -129,9 +242,9 @@ export function TodoListItems({ listId }: { listId: string }) {
                 </button>
               </div>
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -140,7 +253,8 @@ function CreateListItemForm({ listId }: { listId: string }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [deadline, setDeadline] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const titleInputRef = useRef<HTMLInputElement>(null);
   const utils = api.useUtils();
 
   const createItem = api.todo.createItem.useMutation({
@@ -150,77 +264,156 @@ function CreateListItemForm({ listId }: { listId: string }) {
       setTitle("");
       setDescription("");
       setDeadline("");
-      setIsOpen(false);
+      setShowAdvanced(false);
+      // Refocus the input after successful creation
+      titleInputRef.current?.focus();
     },
   });
 
-  if (!isOpen) {
-    return (
-      <button
-        onClick={() => setIsOpen(true)}
-        className="w-full rounded border border-[#1f1f1f] bg-[#141414] px-3 py-2 text-left text-sm text-gray-500 transition hover:border-[#252525] hover:text-gray-300"
-      >
-        + Add Item
-      </button>
-    );
-  }
+  // Autofocus on mount
+  useEffect(() => {
+    titleInputRef.current?.focus();
+  }, []);
+
+  // Keyboard shortcut: Cmd/Ctrl+N to focus input
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check if Cmd (Mac) or Ctrl (Windows/Linux) + N is pressed
+      if ((e.metaKey || e.ctrlKey) && e.key === "n") {
+        // Prevent default browser behavior (new window)
+        e.preventDefault();
+        // Only focus if we're not already in an input/textarea
+        if (
+          document.activeElement?.tagName !== "INPUT" &&
+          document.activeElement?.tagName !== "TEXTAREA"
+        ) {
+          titleInputRef.current?.focus();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim()) return;
+    
+    createItem.mutate({
+      todoListId: listId,
+      title: title.trim(),
+      description: description.trim() || undefined,
+      deadline: deadline ? new Date(deadline) : undefined,
+    });
+  };
 
   return (
     <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        createItem.mutate({
-          todoListId: listId,
-          title,
-          description: description ?? undefined,
-          deadline: deadline ? new Date(deadline) : undefined,
-        });
-      }}
-      className="space-y-2 rounded border border-[#1f1f1f] bg-[#141414] p-3"
+      onSubmit={handleSubmit}
+      className="rounded border border-[#1f1f1f] bg-[#141414] p-3"
     >
-      <input
-        type="text"
-        placeholder="Item title"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        className="w-full rounded border border-[#252525] bg-[#0f0f0f] px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-[#333] focus:outline-none"
-        required
-      />
-      <input
-        type="text"
-        placeholder="Description (optional)"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        className="w-full rounded border border-[#252525] bg-[#0f0f0f] px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-[#333] focus:outline-none"
-      />
-      <input
-        type="datetime-local"
-        placeholder="Deadline (optional)"
-        value={deadline}
-        onChange={(e) => setDeadline(e.target.value)}
-        className="w-full rounded border border-[#252525] bg-[#0f0f0f] px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-[#333] focus:outline-none"
-      />
       <div className="flex gap-2">
+        <input
+          ref={titleInputRef}
+          type="text"
+          placeholder="Add new item..."
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="flex-1 rounded border border-[#252525] bg-[#0f0f0f] px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-[#333] focus:outline-none"
+          required
+        />
         <button
           type="submit"
-          disabled={createItem.isPending}
-          className="flex-1 rounded bg-[#1a1a1a] px-4 py-2 text-sm font-semibold text-gray-300 transition hover:bg-[#222] disabled:opacity-50"
+          disabled={createItem.isPending || !title.trim()}
+          className="flex items-center gap-1.5 rounded bg-[#1a1a1a] px-4 py-2 text-sm font-semibold text-gray-300 transition hover:bg-[#222] disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Add item (Enter)"
         >
-          {createItem.isPending ? "Adding..." : "Add Item"}
+          {createItem.isPending ? (
+            "Adding..."
+          ) : (
+            <>
+              Add
+              <kbd className="pointer-events-none hidden select-none items-center gap-1 rounded border border-[#333] bg-[#0f0f0f] px-1.5 font-mono text-[10px] font-medium text-gray-500 opacity-100 sm:flex">
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="text-gray-500"
+                >
+                  <path
+                    d="M2 6h8M6 2l4 4-4 4"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </kbd>
+            </>
+          )}
         </button>
-        <button
-          type="button"
-          onClick={() => {
-            setIsOpen(false);
-            setTitle("");
-            setDescription("");
-            setDeadline("");
-          }}
-          className="rounded bg-[#0f0f0f] px-4 py-2 text-sm font-semibold text-gray-500 transition hover:bg-[#141414] hover:text-gray-400"
-        >
-          Cancel
-        </button>
+        {!showAdvanced ? (
+          <button
+            type="button"
+            onClick={() => setShowAdvanced(true)}
+            className="rounded bg-[#0f0f0f] px-3 py-2 text-sm text-gray-500 transition hover:bg-[#1a1a1a] hover:text-gray-400"
+            title="Show description and deadline options"
+          >
+            ⋯
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              setShowAdvanced(false);
+              setDescription("");
+              setDeadline("");
+            }}
+            className="rounded bg-[#0f0f0f] px-3 py-2 text-sm text-gray-500 transition hover:bg-[#1a1a1a] hover:text-gray-400"
+            title="Hide advanced options"
+          >
+            −
+          </button>
+        )}
       </div>
+
+      {showAdvanced && (
+        <div className="mt-2 space-y-2">
+          <input
+            type="text"
+            placeholder="Description (optional)"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="w-full rounded border border-[#252525] bg-[#0f0f0f] px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-[#333] focus:outline-none"
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                setShowAdvanced(false);
+                setDescription("");
+                setDeadline("");
+                titleInputRef.current?.focus();
+              }
+            }}
+          />
+          <input
+            type="datetime-local"
+            placeholder="Deadline (optional)"
+            value={deadline}
+            onChange={(e) => setDeadline(e.target.value)}
+            className="w-full rounded border border-[#252525] bg-[#0f0f0f] px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-[#333] focus:outline-none"
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                setShowAdvanced(false);
+                setDescription("");
+                setDeadline("");
+                titleInputRef.current?.focus();
+              }
+            }}
+          />
+        </div>
+      )}
     </form>
   );
 }
