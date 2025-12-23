@@ -27,13 +27,13 @@ export default function ForgotPasswordPage() {
 
       // Check if response has content before parsing
       const contentType = response.headers.get("content-type");
-      let result: any = null;
+      let result: { error?: { message?: string }; message?: string } | null = null;
 
-      if (contentType && contentType.includes("application/json")) {
+      if (contentType?.includes("application/json")) {
         const text = await response.text();
         if (text) {
           try {
-            result = JSON.parse(text);
+            result = JSON.parse(text) as { error?: { message?: string }; message?: string };
           } catch {
             // If parsing fails, treat as empty response
             result = null;
@@ -43,8 +43,8 @@ export default function ForgotPasswordPage() {
 
       if (!response.ok) {
         setError(
-          result?.error?.message ||
-            result?.message ||
+          result?.error?.message ??
+            result?.message ??
             "Failed to send reset email",
         );
       } else {
@@ -65,7 +65,7 @@ export default function ForgotPasswordPage() {
             Forgot Password
           </h1>
           <p className="mt-2 text-sm text-gray-600">
-            Enter your email address and we'll send you a link to reset your
+            Enter your email address and we&apos;ll send you a link to reset your
             password.
           </p>
         </div>

@@ -18,8 +18,8 @@ const getBaseUrl = () => {
 
 // Email transporter for sending emails
 const getEmailTransporter = () => {
-  const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
-  const smtpPort = parseInt(process.env.SMTP_PORT || "587", 10);
+  const smtpHost = process.env.SMTP_HOST ?? "smtp.gmail.com";
+  const smtpPort = parseInt(process.env.SMTP_PORT ?? "587", 10);
   const smtpUser = process.env.SMTP_USER;
   const smtpPassword = process.env.SMTP_PASSWORD;
 
@@ -53,7 +53,7 @@ export const auth = betterAuth({
     sendResetPassword: async ({ user, url, token }) => {
       const transporter = getEmailTransporter();
       const smtpFrom =
-        process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@example.com";
+        process.env.SMTP_FROM ?? process.env.SMTP_USER ?? "noreply@example.com";
 
       const resetUrl = url || `${getBaseUrl()}/reset-password?token=${token}`;
 
@@ -101,14 +101,14 @@ export const auth = betterAuth({
   },
   email: {
     server: {
-      host: process.env.SMTP_HOST || "smtp.gmail.com",
-      port: parseInt(process.env.SMTP_PORT || "587", 10),
+      host: process.env.SMTP_HOST ?? "smtp.gmail.com",
+      port: parseInt(process.env.SMTP_PORT ?? "587", 10),
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASSWORD,
       },
     },
-    from: process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@example.com",
+    from: process.env.SMTP_FROM ?? process.env.SMTP_USER ?? "noreply@example.com",
     baseURL: getBaseUrl(),
   },
   socialProviders: {

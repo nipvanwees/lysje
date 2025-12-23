@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -53,13 +53,13 @@ export default function ResetPasswordPage() {
 
       // Check if response has content before parsing
       const contentType = response.headers.get("content-type");
-      let result: any = null;
+      let result: { error?: { message?: string }; message?: string } | null = null;
 
-      if (contentType && contentType.includes("application/json")) {
+      if (contentType?.includes("application/json")) {
         const text = await response.text();
         if (text) {
           try {
-            result = JSON.parse(text);
+            result = JSON.parse(text) as { error?: { message?: string }; message?: string };
           } catch {
             // If parsing fails, treat as empty response
             result = null;
@@ -69,8 +69,8 @@ export default function ResetPasswordPage() {
 
       if (!response.ok) {
         setError(
-          result?.error?.message ||
-            result?.message ||
+          result?.error?.message ??
+            result?.message ??
             "Failed to reset password",
         );
       } else {
@@ -213,6 +213,27 @@ export default function ResetPasswordPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen flex-col items-center justify-center bg-[#0a0a0a]">
+          <div className="w-full max-w-sm space-y-6 rounded border border-[#1f1f1f] bg-[#141414] p-6">
+            <div className="text-center">
+              <h1 className="text-4xl font-extrabold text-gray-100">
+                Reset Password
+              </h1>
+              <p className="mt-2 text-sm text-gray-600">Loading...</p>
+            </div>
+          </div>
+        </main>
+      }
+    >
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
 
