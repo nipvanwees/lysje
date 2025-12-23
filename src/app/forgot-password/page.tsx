@@ -16,13 +16,20 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      const redirectTo = `${window.location.origin}/reset-password`;
+      // Always use NEXT_PUBLIC_APP_URL if available to match server's baseURL
+      // This ensures the redirect URL matches what better-auth expects
+      // If not set in production, the server's baseURL will be used instead
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
       const response = await fetch("/api/auth/request-password-reset", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, redirectTo }),
+        body: JSON.stringify(
+          baseUrl
+            ? { email, redirectTo: `${baseUrl}/reset-password` }
+            : { email },
+        ),
       });
 
       // Check if response has content before parsing
