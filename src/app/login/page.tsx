@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { authClient } from "~/server/better-auth/client";
 
 export default function LoginPage() {
@@ -108,9 +109,19 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-500">
-              Password
-            </label>
+            <div className="flex items-center justify-between">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-500">
+                Password
+              </label>
+              {isLogin && (
+                <Link
+                  href="/forgot-password"
+                  className="text-xs text-gray-600 underline hover:text-gray-400"
+                >
+                  Forgot password?
+                </Link>
+              )}
+            </div>
             <input
               id="password"
               name="password"
