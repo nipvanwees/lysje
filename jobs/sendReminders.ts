@@ -18,7 +18,9 @@ import nodemailer from "nodemailer";
 import { toZonedTime } from "date-fns-tz";
 
 const appName = "Lysje";
-const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://lysje.nvanwees.nl/";
+const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://lysje.nvanwees.nl";
+
+const minuteThreshold = 50;
 
 // Set to true to bypass time/day checks and send to all users with settings (for testing)
 const TEST_MODE = process.env.TEST_MODE === "true";
@@ -105,7 +107,7 @@ function generateEmailHTML(userName: string, todosByList: Array<{ list: { id: st
         for (const { list, items } of todosByList) {
             html += `
         <div class="list-section">
-            <div class="list-name"><a href="${appUrl}lists/${list.id}">${list.name}</a></div>
+            <div class="list-name"><a href="${appUrl}/lists/${list.id}">${list.name}</a></div>
     `;
 
             if (items.length === 0) {
@@ -249,7 +251,7 @@ function shouldSendNotification(
 
         // Send if within 1 hour of notification time
         // This handles cases where cron runs at different times
-        return timeDifference <= 60;
+        return timeDifference <= minuteThreshold;
     } catch (error) {
         console.error(`Error checking notification time for timezone ${timezone}:`, error);
         return false;
@@ -279,7 +281,7 @@ async function sendEmailToUser(
                 "X-Priority": "3",
                 "X-MSMail-Priority": "Normal",
                 "Importance": "normal",
-                "List-Unsubscribe": `<${appUrl}settings>`,
+                "List-Unsubscribe": `<${appUrl}/settings>`,
             },
             // Add reply-to for better deliverability
             replyTo: smtpFrom,
@@ -379,7 +381,7 @@ async function getOpenTodos() {
                     `⊘ Skipping ${user.email} - not the right time/day\n` +
                     `  Current: ${nowInUserTz.toLocaleString("en-US", { timeZone: user.timezone })} (day ${currentDay}) in ${user.timezone}\n` +
                     `  Configured: ${user.notificationTime} on days [${days.join(",")}]\n` +
-                    `  Time difference: ${timeDifference} minutes (needs to be ≤ 60 minutes)`,
+                    `  Time difference: ${timeDifference} minutes (needs to be ≤ ${minuteThreshold} minutes)`,
                 );
                 skippedTime++;
                 continue;
