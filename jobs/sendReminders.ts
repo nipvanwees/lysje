@@ -16,6 +16,7 @@
 import { PrismaClient } from "../generated/prisma";
 import nodemailer from "nodemailer";
 import { toZonedTime } from "date-fns-tz";
+import encouragingTexts from "./encouragingText.json";
 
 const appName = "Lysje";
 const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://lysje.nvanwees.nl";
@@ -80,25 +81,132 @@ function generateEmailHTML(userName: string, todosByList: Array<{ list: { id: st
 <html>
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        h1 { color: #2c3e50; }
-        .list-section { margin: 20px 0; padding: 15px; background-color: #f8f9fa; }
-        .list-name { font-size: 18px; font-weight: bold; color: #2c3e50; margin-bottom: 10px; }
-        .todo-item { margin: 10px 0; padding: 10px; background-color: white; border-radius: 4px; }
-        .todo-title { font-weight: bold; color: #2c3e50; }
-        .todo-description { color: #666; margin-top: 5px; font-size: 14px; }
-        .todo-deadline { color: #e74c3c; font-size: 12px; margin-top: 5px; }
-        .todo-deadline.overdue { color: #c0392b; font-weight: bold; }
-        .no-todos { color: #7f8c8d; font-style: italic; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; 
+            line-height: 1.5; 
+            color: #333; 
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+        }
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            padding: 20px 16px;
+            background-color: #ffffff;
+        }
+        .logo-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            text-decoration: none;
+        }
+        .logo-link svg {
+            display: block;
+        }
+        .logo-text {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+        .greeting {
+            color: #333;
+            font-size: 15px;
+            margin: 0 0 16px 0;
+        }
+        .list-section { 
+            margin: 20px 0;
+            padding: 12px 0;
+            border-top: 2px solid #e5e7eb;
+        }
+        .list-section:first-of-type {
+            border-top: none;
+            margin-top: 0;
+        }
+        .list-name { 
+            font-size: 15px; 
+            font-weight: 600; 
+            color: #333; 
+            margin: 0 0 10px 0;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .list-name a {
+            color: #333;
+            text-decoration: none;
+        }
+        .list-name a:hover {
+            text-decoration: underline;
+        }
+        .todo-item { 
+            margin: 6px 0;
+            padding: 6px 0 6px 12px;
+            border-left: 2px solid #d1d5db;
+        }
+        .todo-title { 
+            font-weight: 500; 
+            color: #333; 
+            font-size: 14px;
+            margin: 0;
+        }
+        .todo-description { 
+            color: #666; 
+            margin-top: 3px; 
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        .todo-deadline { 
+            color: #dc2626; 
+            font-size: 12px; 
+            margin-top: 3px;
+        }
+        .todo-deadline.overdue { 
+            color: #b91c1c; 
+            font-weight: 600;
+        }
+        .no-todos { 
+            color: #9ca3af; 
+            font-style: italic;
+            font-size: 13px;
+            margin: 6px 0;
+        }
+        .encouraging-text {
+            color: #666;
+            font-size: 14px;
+            font-style: italic;
+            margin: 0 0 16px 0;
+            padding: 8px 0;
+        }
+        .footer {
+            margin-top: 24px;
+            padding-top: 12px;
+            border-top: 1px solid #e5e7eb;
+            color: #9ca3af;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1><a href="${appUrl}">${appName}</a></h1>
-        <p>Hi ${userName || "there"},</p>
-        <p>Your open todo items:</p>
+        <a href="${appUrl}" class="logo-link">
+            <svg width="32" height="32" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M25 20 L25 85 L55 85 L55 100 L25 100 L25 20 Z" fill="#333" fill-opacity="0.95"/>
+                <path d="M70 45 L80 55 L100 35" stroke="#333" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="logo-text">Lysje</span>
+        </a>
+    `;
+
+    // Add a random encouraging text if there are todos
+    if (todosByList.length > 0) {
+        const randomText = encouragingTexts[Math.floor(Math.random() * encouragingTexts.length)] as string;
+        html += `<p class="encouraging-text">${escapeHtml(randomText)}</p>`;
+    }
+
+    html += `
     `;
 
     if (todosByList.length === 0) {
@@ -107,7 +215,7 @@ function generateEmailHTML(userName: string, todosByList: Array<{ list: { id: st
         for (const { list, items } of todosByList) {
             html += `
         <div class="list-section">
-            <div class="list-name"><a href="${appUrl}/lists/${list.id}">${list.name}</a></div>
+            <div class="list-name"><a href="${appUrl}/lists/${list.id}">${escapeHtml(list.name)}</a></div>
     `;
 
             if (items.length === 0) {
@@ -137,9 +245,9 @@ function generateEmailHTML(userName: string, todosByList: Array<{ list: { id: st
     }
 
     html += `
-        <p style="margin-top: 30px; color: #7f8c8d; font-size: 12px;">
-            This is an automated email from Lysje.
-        </p>
+        <div class="footer">
+            This is an automated email from <a href="${appUrl}" style="color: #6b7280; text-decoration: none;">Lysje</a>.
+        </div>
     </div>
 </body>
 </html>
