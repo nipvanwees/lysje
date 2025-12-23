@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
 
@@ -51,17 +51,20 @@ export function TodoListItems({ listId }: { listId: string }) {
             <p className="text-sm text-gray-500">{list.description}</p>
           )}
         </div>
-        <button
-          onClick={() => {
-            if (confirm("Are you sure you want to delete this list?")) {
-              deleteList.mutate({ id: listId });
-            }
-          }}
-          className="rounded px-3 py-1 text-sm text-gray-600 transition hover:text-gray-400"
-          disabled={deleteList.isPending}
-        >
-          {deleteList.isPending ? "Deleting..." : "Delete List"}
-        </button>
+        <div className="flex gap-2">
+          <EditListModal list={list} listId={listId} />
+          <button
+            onClick={() => {
+              if (confirm("Are you sure you want to delete this list?")) {
+                deleteList.mutate({ id: listId });
+              }
+            }}
+            className="rounded px-3 py-1 text-sm text-gray-600 transition hover:text-gray-400"
+            disabled={deleteList.isPending}
+          >
+            {deleteList.isPending ? "Deleting..." : "Delete List"}
+          </button>
+        </div>
       </div>
 
       <CreateListItemForm listId={listId} />
@@ -219,6 +222,141 @@ function CreateListItemForm({ listId }: { listId: string }) {
         </button>
       </div>
     </form>
+  );
+}
+
+function EditListModal({
+  list,
+  listId,
+}: {
+  list: { id: string; name: string; description: string | null; icon: string | null };
+  listId: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [name, setName] = useState(list.name);
+  const [description, setDescription] = useState(list.description || "");
+  const [icon, setIcon] = useState(list.icon || "");
+  const utils = api.useUtils();
+
+  const updateList = api.todo.updateList.useMutation({
+    onSuccess: () => {
+      void utils.todo.getList.invalidate({ id: listId });
+      void utils.todo.getAllLists.invalidate();
+      setIsOpen(false);
+    },
+  });
+
+  // Update form values when list changes or modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setName(list.name);
+      setDescription(list.description || "");
+      setIcon(list.icon || "");
+    }
+  }, [list.name, list.description, list.icon, isOpen]);
+
+  // Handle escape key to close modal
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsOpen(false);
+        setName(list.name);
+        setDescription(list.description || "");
+        setIcon(list.icon || "");
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [isOpen, list.name, list.description, list.icon]);
+
+  if (!isOpen) {
+    return (
+      <button
+        onClick={() => setIsOpen(true)}
+        className="rounded px-3 py-1 text-sm text-gray-600 transition hover:text-gray-400"
+      >
+        Edit List
+      </button>
+    );
+  }
+
+  return (
+    <>
+      {/* Modal overlay */}
+      <div
+        className="fixed inset-0 z-40 bg-black/50"
+        onClick={() => setIsOpen(false)}
+      />
+      {/* Modal */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div
+          className="w-full max-w-md rounded-lg border border-[#1f1f1f] bg-[#141414] p-6 shadow-xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h3 className="mb-4 text-xl font-bold text-gray-100">Edit List</h3>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              updateList.mutate({
+                id: listId,
+                name,
+                description: description || undefined,
+                icon: icon || undefined,
+              });
+            }}
+            className="space-y-3"
+          >
+            <input
+              type="text"
+              placeholder="List name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full rounded border border-[#252525] bg-[#0f0f0f] px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-[#333] focus:outline-none"
+              required
+            />
+            <input
+              type="text"
+              placeholder="Description (optional)"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full rounded border border-[#252525] bg-[#0f0f0f] px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-[#333] focus:outline-none"
+            />
+            <input
+              type="text"
+              placeholder="Icon emoji (optional)"
+              value={icon}
+              onChange={(e) => setIcon(e.target.value)}
+              className="w-full rounded border border-[#252525] bg-[#0f0f0f] px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-[#333] focus:outline-none"
+              maxLength={2}
+            />
+            <div className="flex gap-2 pt-2">
+              <button
+                type="submit"
+                disabled={updateList.isPending}
+                className="flex-1 rounded bg-[#1a1a1a] px-4 py-2 text-sm font-semibold text-gray-300 transition hover:bg-[#222] disabled:opacity-50"
+              >
+                {updateList.isPending ? "Saving..." : "Save Changes"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  setName(list.name);
+                  setDescription(list.description || "");
+                  setIcon(list.icon || "");
+                }}
+                className="rounded bg-[#0f0f0f] px-4 py-2 text-sm font-semibold text-gray-500 transition hover:bg-[#141414] hover:text-gray-400"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </>
   );
 }
 
