@@ -53,8 +53,9 @@ export const auth = betterAuth({
     requireEmailVerification: false, // Set to true if you want email verification
     sendResetPassword: async ({ user, url, token }) => {
       const transporter = getEmailTransporter();
-      const smtpFrom =
+      const smtpFromEmail =
         process.env.SMTP_FROM ?? process.env.SMTP_USER ?? "noreply@example.com";
+      const smtpFrom = `Lysje <${smtpFromEmail}>`;
 
       const resetUrl = url || `${getBaseUrl()}/reset-password?token=${token}`;
 
@@ -109,7 +110,10 @@ export const auth = betterAuth({
         pass: process.env.SMTP_PASSWORD,
       },
     },
-    from: process.env.SMTP_FROM ?? process.env.SMTP_USER ?? "noreply@example.com",
+    from: (() => {
+      const email = process.env.SMTP_FROM ?? process.env.SMTP_USER ?? "noreply@example.com";
+      return `Lysje <${email}>`;
+    })(),
     baseURL: getBaseUrl(),
   },
   socialProviders: {

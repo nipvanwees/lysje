@@ -265,7 +265,8 @@ async function sendEmailToUser(
     todosByList: Array<{ list: { id: string; name: string; description: string | null }; items: Array<{ title: string; description: string | null; deadline: Date | null; createdAt: Date }> }>,
     transporter: nodemailer.Transporter,
 ) {
-    const smtpFrom = process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@example.com";
+    const smtpFromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@example.com";
+    const smtpFrom = `Lysje <${smtpFromEmail}>`;
 
     try {
         console.log(`Attempting to send email to ${userEmail} from ${smtpFrom}...`);
@@ -284,7 +285,7 @@ async function sendEmailToUser(
                 "List-Unsubscribe": `<${appUrl}/settings>`,
             },
             // Add reply-to for better deliverability
-            replyTo: smtpFrom,
+            replyTo: smtpFromEmail,
         });
 
         console.log(`✓ Email sent successfully to ${userEmail}`);
