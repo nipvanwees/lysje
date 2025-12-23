@@ -39,9 +39,9 @@ model User {
   accounts         Account[]
   posts            Post[]
   todoLists        TodoList[]
-  notificationTime String? // Time in HH:mm format (e.g., "09:00")
-  notificationDays String? // Comma-separated days (0=Sunday, 1=Monday, etc.) e.g., "1,2,3,4,5"
-  timezone         String? // IANA timezone (e.g., "America/New_York")
+  notificationTime String?    @default("09:00") // Time in HH:mm format (e.g., "09:00")
+  notificationDays String?    @default("1,2,3,4,5") // Comma-separated days (0=Sunday, 1=Monday, etc.) e.g., "1,2,3,4,5"
+  timezone         String?    @default("Europe/Amsterdam") // IANA timezone (e.g., "America/New_York")
 
   @@unique([email])
   @@map("user")
