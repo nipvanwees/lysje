@@ -20,12 +20,15 @@ import { toZonedTime } from "date-fns-tz";
 const appName = "Lysje";
 const appUrl = "http://y40gocgwg4oww80go8gcggo8.46.224.121.159.sslip.io/";
 
+// Set to true to bypass time/day checks and send to all users with settings (for testing)
+const TEST_MODE = process.env.TEST_MODE === "true";
+
 const prisma = new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
 });
 
 // Email configuration from environment variables
-const getEmailTransporter = () => {
+const getEmailTransporter = async () => {
     const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
     const smtpPort = parseInt(process.env.SMTP_PORT || "587", 10);
     const smtpUser = process.env.SMTP_USER;
@@ -38,7 +41,9 @@ const getEmailTransporter = () => {
         );
     }
 
-    return nodemailer.createTransport({
+    console.log(`Configuring SMTP: ${smtpHost}:${smtpPort}, user: ${smtpUser}, from: ${smtpFrom}`);
+
+    const transporter = nodemailer.createTransport({
         host: smtpHost,
         port: smtpPort,
         secure: smtpPort === 465, // true for 465, false for other ports
@@ -50,7 +55,20 @@ const getEmailTransporter = () => {
             user: smtpUser,
             pass: smtpPassword,
         },
+        debug: process.env.NODE_ENV === "development", // Enable debug output
+        logger: process.env.NODE_ENV === "development", // Enable logging
     });
+
+    // Verify connection and wait for it
+    try {
+        await transporter.verify();
+        console.log("✓ SMTP server is ready to send messages");
+    } catch (error) {
+        console.error("✗ SMTP connection verification failed:", error);
+        throw error;
+    }
+
+    return transporter;
 };
 
 // Generate HTML email content for a user's open todos
@@ -243,22 +261,53 @@ async function sendEmailToUser(
     userEmail: string,
     userName: string,
     todosByList: Array<{ list: { id: string; name: string; description: string | null }; items: Array<{ title: string; description: string | null; deadline: Date | null; createdAt: Date }> }>,
+    transporter: nodemailer.Transporter,
 ) {
-    const transporter = getEmailTransporter();
     const smtpFrom = process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@example.com";
 
     try {
-        await transporter.sendMail({
+        console.log(`Attempting to send email to ${userEmail} from ${smtpFrom}...`);
+
+        const info = await transporter.sendMail({
             from: smtpFrom,
             to: userEmail,
             subject: "Your Open Todo Items",
             text: generateEmailText(userName, todosByList),
             html: generateEmailHTML(userName, todosByList),
+            // Add headers to improve deliverability
+            headers: {
+                "X-Priority": "3",
+                "X-MSMail-Priority": "Normal",
+                "Importance": "normal",
+                "List-Unsubscribe": `<${appUrl}/settings>`,
+            },
+            // Add reply-to for better deliverability
+            replyTo: smtpFrom,
         });
+
         console.log(`✓ Email sent successfully to ${userEmail}`);
+        console.log(`  Message ID: ${info.messageId}`);
+        console.log(`  Response: ${info.response}`);
+
+        // Verify the email was actually accepted
+        if (info.accepted && info.accepted.length > 0) {
+            console.log(`  Accepted by server for: ${info.accepted.join(", ")}`);
+        }
+        if (info.rejected && info.rejected.length > 0) {
+            console.error(`  Rejected by server: ${info.rejected.join(", ")}`);
+            return false;
+        }
+        if (info.pending && info.pending.length > 0) {
+            console.warn(`  Pending: ${info.pending.join(", ")}`);
+        }
+
         return true;
     } catch (error) {
         console.error(`✗ Failed to send email to ${userEmail}:`, error);
+        if (error instanceof Error) {
+            console.error(`  Error message: ${error.message}`);
+            console.error(`  Error stack: ${error.stack}`);
+        }
         return false;
     }
 }
@@ -266,6 +315,11 @@ async function sendEmailToUser(
 async function getOpenTodos() {
     try {
         console.log("Fetching users with their open todo items...\n");
+        console.log(`Current server time: ${new Date().toISOString()}\n`);
+
+        // Create transporter once and verify connection
+        console.log("Initializing email transporter...");
+        const transporter = await getEmailTransporter();
 
         // Get all users with their todo lists and only open items
         const users = await prisma.user.findMany({
@@ -286,30 +340,48 @@ async function getOpenTodos() {
             },
         });
 
+        console.log(`Found ${users.length} user(s) in database\n`);
+
         let emailsSent = 0;
         let emailsFailed = 0;
+        let skippedNoSettings = 0;
+        let skippedTime = 0;
+        let skippedNoTodos = 0;
 
         for (const user of users) {
             // Check if user has notification settings configured
             if (!user.notificationTime || !user.notificationDays || !user.timezone) {
-                console.log(`⊘ Skipping ${user.email} - notification settings not configured`);
+                console.log(`⊘ Skipping ${user.email} - notification settings not configured (time: ${user.notificationTime ?? "null"}, days: ${user.notificationDays ?? "null"}, timezone: ${user.timezone ?? "null"})`);
+                skippedNoSettings++;
                 continue;
             }
 
             // Check if it's time to send notification based on user's timezone and preferences
-            if (
-                !shouldSendNotification(
-                    user.notificationTime,
-                    user.notificationDays,
-                    user.timezone,
-                )
-            ) {
+            // In test mode, skip the time check
+            const shouldSend = TEST_MODE || shouldSendNotification(
+                user.notificationTime,
+                user.notificationDays,
+                user.timezone,
+            );
+
+            if (!shouldSend && !TEST_MODE) {
                 const nowInUserTz = toZonedTime(new Date(), user.timezone);
                 const currentDay = nowInUserTz.getDay();
                 const days = user.notificationDays.split(",").map(Number);
+                const [hours, minutes] = user.notificationTime.split(":").map(Number);
+                const currentHour = nowInUserTz.getHours();
+                const currentMinute = nowInUserTz.getMinutes();
+                const currentTimeInMinutes = currentHour * 60 + currentMinute;
+                const notificationTimeInMinutes = (hours ?? 9) * 60 + (minutes ?? 0);
+                const timeDifference = Math.abs(currentTimeInMinutes - notificationTimeInMinutes);
+
                 console.log(
-                    `⊘ Skipping ${user.email} - not the right time/day (current: ${nowInUserTz.toLocaleString("en-US", { timeZone: user.timezone })} in ${user.timezone}, configured: ${user.notificationTime} on days [${days.join(",")}])`,
+                    `⊘ Skipping ${user.email} - not the right time/day\n` +
+                    `  Current: ${nowInUserTz.toLocaleString("en-US", { timeZone: user.timezone })} (day ${currentDay}) in ${user.timezone}\n` +
+                    `  Configured: ${user.notificationTime} on days [${days.join(",")}]\n` +
+                    `  Time difference: ${timeDifference} minutes (needs to be ≤ 60 minutes)`,
                 );
+                skippedTime++;
                 continue;
             }
 
@@ -328,6 +400,7 @@ async function getOpenTodos() {
             // Skip users with no open todos
             if (todosByList.length === 0) {
                 console.log(`⊘ Skipping ${user.email} - no open todos`);
+                skippedNoTodos++;
                 continue;
             }
 
@@ -338,7 +411,7 @@ async function getOpenTodos() {
                 `📧 Sending email to ${user.email} (${totalOpenTodos} open todo(s) across ${todosByList.length} list(s)) at ${nowInUserTz.toLocaleString("en-US", { timeZone: user.timezone })} in ${user.timezone}`,
             );
 
-            const success = await sendEmailToUser(user.email, user.name, todosByList);
+            const success = await sendEmailToUser(user.email, user.name, todosByList, transporter);
             if (success) {
                 emailsSent++;
             } else {
@@ -346,7 +419,12 @@ async function getOpenTodos() {
             }
         }
 
-        console.log(`\n✅ Summary: ${emailsSent} email(s) sent, ${emailsFailed} failed`);
+        console.log(`\n✅ Summary:`);
+        console.log(`   📧 Emails sent: ${emailsSent}`);
+        console.log(`   ✗ Failed: ${emailsFailed}`);
+        console.log(`   ⊘ Skipped (no settings): ${skippedNoSettings}`);
+        console.log(`   ⊘ Skipped (wrong time/day): ${skippedTime}`);
+        console.log(`   ⊘ Skipped (no open todos): ${skippedNoTodos}`);
     } catch (error) {
         console.error("Error fetching open todos:", error);
         process.exit(1);
