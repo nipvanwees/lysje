@@ -53,29 +53,29 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
-      <div className="w-full max-w-md space-y-8 rounded-xl bg-white/10 p-8">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-[#0a0a0a]">
+      <div className="w-full max-w-sm space-y-6 rounded border border-[#1f1f1f] bg-[#141414] p-6">
         <div className="text-center">
-          <h1 className="text-4xl font-extrabold">
+          <h1 className="text-4xl font-extrabold text-gray-100">
             {isLogin ? "Sign In" : "Sign Up"}
           </h1>
-          <p className="mt-2 text-sm text-gray-300">
+          <p className="mt-2 text-sm text-gray-600">
             {isLogin
               ? "Welcome back! Please sign in to your account."
               : "Create a new account to get started."}
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           {error && (
-            <div className="rounded-md bg-red-500/20 p-3 text-sm text-red-200">
+            <div className="rounded border border-red-900/30 bg-red-950/20 p-3 text-sm text-red-400">
               {error}
             </div>
           )}
 
           {!isLogin && (
             <div>
-              <label htmlFor="name" className="block text-sm font-medium">
+              <label htmlFor="name" className="block text-sm font-medium text-gray-500">
                 Name
               </label>
               <input
@@ -85,14 +85,14 @@ export default function LoginPage() {
                 required={!isLogin}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-white/20 bg-white/10 px-3 py-2 text-white placeholder-gray-400 focus:border-white/40 focus:ring-2 focus:ring-white/20 focus:outline-none"
+                className="mt-1 block w-full rounded border border-[#252525] bg-[#0f0f0f] px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-[#333] focus:outline-none"
                 placeholder="Your name"
               />
             </div>
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-500">
               Email
             </label>
             <input
@@ -102,13 +102,13 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-white/20 bg-white/10 px-3 py-2 text-white placeholder-gray-400 focus:border-white/40 focus:ring-2 focus:ring-white/20 focus:outline-none"
+              className="mt-1 block w-full rounded border border-[#252525] bg-[#0f0f0f] px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-[#333] focus:outline-none"
               placeholder="you@example.com"
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-500">
               Password
             </label>
             <input
@@ -118,7 +118,7 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-white/20 bg-white/10 px-3 py-2 text-white placeholder-gray-400 focus:border-white/40 focus:ring-2 focus:ring-white/20 focus:outline-none"
+              className="mt-1 block w-full rounded border border-[#252525] bg-[#0f0f0f] px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-[#333] focus:outline-none"
               placeholder="••••••••"
             />
           </div>
@@ -126,7 +126,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-white/10 px-4 py-2 font-semibold text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded bg-[#1a1a1a] px-4 py-2 font-semibold text-sm text-gray-300 transition hover:bg-[#222] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? "Please wait..." : isLogin ? "Sign In" : "Sign Up"}
           </button>
@@ -139,7 +139,7 @@ export default function LoginPage() {
               setIsLogin(!isLogin);
               setError(null);
             }}
-            className="text-sm text-gray-300 underline hover:text-white"
+            className="text-sm text-gray-600 underline hover:text-gray-400"
           >
             {isLogin
               ? "Don't have an account? Sign up"

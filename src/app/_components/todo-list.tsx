@@ -8,23 +8,23 @@ export function TodoLists() {
   const { data: lists, isLoading } = api.todo.getAllLists.useQuery();
 
   if (isLoading) {
-    return <div className="text-white">Loading...</div>;
+    return <div className="text-gray-400">Loading...</div>;
   }
 
   return (
-    <div className="flex h-full gap-4">
+    <div className="flex h-full gap-6">
       {/* Sidebar with todo lists */}
-      <div className="w-64 space-y-4">
+      <div className="w-56 space-y-2">
         <CreateTodoListForm />
-        <div className="space-y-2">
+        <div className="space-y-1">
           {lists?.map((list) => (
             <button
               key={list.id}
               onClick={() => setSelectedListId(list.id)}
-              className={`w-full rounded-lg p-4 text-left transition ${
+              className={`w-full rounded px-3 py-2 text-left transition ${
                 selectedListId === list.id
-                  ? "bg-white/20"
-                  : "bg-white/10 hover:bg-white/15"
+                  ? "bg-[#1a1a1a] text-gray-100"
+                  : "text-gray-400 hover:bg-[#141414] hover:text-gray-300"
               }`}
             >
               <div className="flex items-center gap-2">
@@ -32,11 +32,11 @@ export function TodoLists() {
                 <div className="flex-1">
                   <h3 className="font-semibold">{list.name}</h3>
                   {list.description && (
-                    <p className="text-sm text-gray-300">{list.description}</p>
+                    <p className="text-sm text-gray-500">{list.description}</p>
                   )}
                 </div>
               </div>
-              <p className="mt-2 text-xs text-gray-400">
+              <p className="mt-2 text-xs text-gray-600">
                 {list.items.length} items
               </p>
             </button>
@@ -49,7 +49,7 @@ export function TodoLists() {
         {selectedListId ? (
           <TodoListItems listId={selectedListId} />
         ) : (
-          <div className="flex h-full items-center justify-center text-gray-400">
+          <div className="flex h-full items-center justify-center text-sm text-gray-600">
             Select a list to view items
           </div>
         )}
@@ -79,7 +79,7 @@ function CreateTodoListForm() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="w-full rounded-lg bg-white/10 p-4 text-left transition hover:bg-white/20"
+        className="w-full rounded px-3 py-2 text-left text-sm text-gray-500 transition hover:bg-[#141414] hover:text-gray-300"
       >
         + Create New List
       </button>
@@ -92,14 +92,14 @@ function CreateTodoListForm() {
         e.preventDefault();
         createList.mutate({ name, description: description || undefined, icon: icon || undefined });
       }}
-      className="space-y-2 rounded-lg bg-white/10 p-4"
+      className="space-y-2 rounded bg-[#141414] p-3"
     >
       <input
         type="text"
         placeholder="List name"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        className="w-full rounded-md border border-white/20 bg-white/10 px-3 py-2 text-white placeholder-gray-400 focus:border-white/40 focus:outline-none"
+        className="w-full rounded border border-[#252525] bg-[#0f0f0f] px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-[#333] focus:outline-none"
         required
       />
       <input
@@ -107,21 +107,21 @@ function CreateTodoListForm() {
         placeholder="Description (optional)"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
-        className="w-full rounded-md border border-white/20 bg-white/10 px-3 py-2 text-white placeholder-gray-400 focus:border-white/40 focus:outline-none"
+        className="w-full rounded border border-[#252525] bg-[#0f0f0f] px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-[#333] focus:outline-none"
       />
       <input
         type="text"
         placeholder="Icon emoji (optional)"
         value={icon}
         onChange={(e) => setIcon(e.target.value)}
-        className="w-full rounded-md border border-white/20 bg-white/10 px-3 py-2 text-white placeholder-gray-400 focus:border-white/40 focus:outline-none"
+        className="w-full rounded border border-[#252525] bg-[#0f0f0f] px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-[#333] focus:outline-none"
         maxLength={2}
       />
       <div className="flex gap-2">
         <button
           type="submit"
           disabled={createList.isPending}
-          className="flex-1 rounded-md bg-white/20 px-4 py-2 text-sm font-semibold transition hover:bg-white/30 disabled:opacity-50"
+          className="flex-1 rounded bg-[#1a1a1a] px-4 py-2 text-sm font-semibold text-gray-300 transition hover:bg-[#222] disabled:opacity-50"
         >
           {createList.isPending ? "Creating..." : "Create"}
         </button>
@@ -133,7 +133,7 @@ function CreateTodoListForm() {
             setDescription("");
             setIcon("");
           }}
-          className="rounded-md bg-white/10 px-4 py-2 text-sm font-semibold transition hover:bg-white/20"
+          className="rounded bg-[#0f0f0f] px-4 py-2 text-sm font-semibold text-gray-500 transition hover:bg-[#141414] hover:text-gray-400"
         >
           Cancel
         </button>
@@ -161,23 +161,23 @@ function TodoListItems({ listId }: { listId: string }) {
   });
 
   if (isLoading) {
-    return <div className="text-white">Loading items...</div>;
+    return <div className="text-gray-400">Loading items...</div>;
   }
 
   if (!list) {
-    return <div className="text-white">List not found</div>;
+    return <div className="text-gray-400">List not found</div>;
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">
+          <h2 className="text-2xl font-bold text-gray-100">
             {list.icon && <span className="mr-2">{list.icon}</span>}
             {list.name}
           </h2>
           {list.description && (
-            <p className="text-gray-300">{list.description}</p>
+            <p className="text-sm text-gray-500">{list.description}</p>
           )}
         </div>
         <DeleteListButton listId={listId} />
@@ -187,15 +187,15 @@ function TodoListItems({ listId }: { listId: string }) {
 
       <div className="space-y-2">
         {list.items.length === 0 ? (
-          <p className="text-center text-gray-400">No items yet. Add one above!</p>
+          <p className="text-center text-sm text-gray-600">No items yet. Add one above!</p>
         ) : (
           list.items.map((item) => (
             <div
               key={item.id}
-              className={`rounded-lg border p-4 ${
+              className={`rounded border p-4 ${
                 item.done
-                  ? "border-white/10 bg-white/5"
-                  : "border-white/20 bg-white/10"
+                  ? "border-[#1a1a1a] bg-[#0f0f0f]"
+                  : "border-[#1f1f1f] bg-[#141414]"
               }`}
             >
               <div className="flex items-start gap-3">
@@ -203,12 +203,12 @@ function TodoListItems({ listId }: { listId: string }) {
                   type="checkbox"
                   checked={item.done}
                   onChange={() => toggleItem.mutate({ id: item.id })}
-                  className="mt-1 h-5 w-5 cursor-pointer"
+                  className="mt-1 h-5 w-5 cursor-pointer rounded border-[#333] bg-[#0f0f0f] text-gray-400 focus:ring-0"
                 />
                 <div className="flex-1">
                   <h3
                     className={`font-semibold ${
-                      item.done ? "line-through text-gray-400" : "text-white"
+                      item.done ? "line-through text-gray-600" : "text-gray-200"
                     }`}
                   >
                     {item.title}
@@ -216,7 +216,7 @@ function TodoListItems({ listId }: { listId: string }) {
                   {item.description && (
                     <p
                       className={`mt-1 text-sm ${
-                        item.done ? "text-gray-500" : "text-gray-300"
+                        item.done ? "text-gray-600" : "text-gray-500"
                       }`}
                     >
                       {item.description}
@@ -226,10 +226,10 @@ function TodoListItems({ listId }: { listId: string }) {
                     <p
                       className={`mt-1 text-xs ${
                         item.done
-                          ? "text-gray-500"
+                          ? "text-gray-600"
                           : new Date(item.deadline) < new Date()
-                            ? "text-red-400"
-                            : "text-gray-400"
+                            ? "text-red-500"
+                            : "text-gray-600"
                       }`}
                     >
                       Deadline: {new Date(item.deadline).toLocaleDateString()}
@@ -238,7 +238,7 @@ function TodoListItems({ listId }: { listId: string }) {
                 </div>
                 <button
                   onClick={() => deleteItem.mutate({ id: item.id })}
-                  className="text-red-400 hover:text-red-300"
+                  className="text-gray-600 hover:text-gray-400"
                   disabled={deleteItem.isPending}
                 >
                   ×
@@ -274,7 +274,7 @@ function CreateListItemForm({ listId }: { listId: string }) {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="w-full rounded-lg border border-white/20 bg-white/10 p-3 text-left transition hover:bg-white/20"
+        className="w-full rounded border border-[#1f1f1f] bg-[#141414] px-3 py-2 text-left text-sm text-gray-500 transition hover:border-[#252525] hover:text-gray-300"
       >
         + Add Item
       </button>
@@ -292,14 +292,14 @@ function CreateListItemForm({ listId }: { listId: string }) {
           deadline: deadline ? new Date(deadline) : undefined,
         });
       }}
-      className="space-y-2 rounded-lg border border-white/20 bg-white/10 p-4"
+      className="space-y-2 rounded border border-[#1f1f1f] bg-[#141414] p-3"
     >
       <input
         type="text"
         placeholder="Item title"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        className="w-full rounded-md border border-white/20 bg-white/10 px-3 py-2 text-white placeholder-gray-400 focus:border-white/40 focus:outline-none"
+        className="w-full rounded border border-[#252525] bg-[#0f0f0f] px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-[#333] focus:outline-none"
         required
       />
       <input
@@ -307,20 +307,20 @@ function CreateListItemForm({ listId }: { listId: string }) {
         placeholder="Description (optional)"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
-        className="w-full rounded-md border border-white/20 bg-white/10 px-3 py-2 text-white placeholder-gray-400 focus:border-white/40 focus:outline-none"
+        className="w-full rounded border border-[#252525] bg-[#0f0f0f] px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-[#333] focus:outline-none"
       />
       <input
         type="datetime-local"
         placeholder="Deadline (optional)"
         value={deadline}
         onChange={(e) => setDeadline(e.target.value)}
-        className="w-full rounded-md border border-white/20 bg-white/10 px-3 py-2 text-white placeholder-gray-400 focus:border-white/40 focus:outline-none"
+        className="w-full rounded border border-[#252525] bg-[#0f0f0f] px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-[#333] focus:outline-none"
       />
       <div className="flex gap-2">
         <button
           type="submit"
           disabled={createItem.isPending}
-          className="flex-1 rounded-md bg-white/20 px-4 py-2 text-sm font-semibold transition hover:bg-white/30 disabled:opacity-50"
+          className="flex-1 rounded bg-[#1a1a1a] px-4 py-2 text-sm font-semibold text-gray-300 transition hover:bg-[#222] disabled:opacity-50"
         >
           {createItem.isPending ? "Adding..." : "Add Item"}
         </button>
@@ -332,7 +332,7 @@ function CreateListItemForm({ listId }: { listId: string }) {
             setDescription("");
             setDeadline("");
           }}
-          className="rounded-md bg-white/10 px-4 py-2 text-sm font-semibold transition hover:bg-white/20"
+          className="rounded bg-[#0f0f0f] px-4 py-2 text-sm font-semibold text-gray-500 transition hover:bg-[#141414] hover:text-gray-400"
         >
           Cancel
         </button>
@@ -356,7 +356,7 @@ function DeleteListButton({ listId }: { listId: string }) {
           deleteList.mutate({ id: listId });
         }
       }}
-      className="rounded-md bg-red-500/20 px-3 py-1 text-sm text-red-300 transition hover:bg-red-500/30"
+      className="rounded px-3 py-1 text-sm text-gray-600 transition hover:text-gray-400"
       disabled={deleteList.isPending}
     >
       {deleteList.isPending ? "Deleting..." : "Delete List"}
