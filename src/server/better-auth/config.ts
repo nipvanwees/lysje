@@ -44,6 +44,7 @@ const getEmailTransporter = () => {
 };
 
 export const auth = betterAuth({
+  baseURL: getBaseUrl(),
   database: prismaAdapter(db, {
     provider: "mysql", // or "sqlite" or "mysql"
   }),
