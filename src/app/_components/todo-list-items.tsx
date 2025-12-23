@@ -172,7 +172,7 @@ function CreateListItemForm({ listId }: { listId: string }) {
         createItem.mutate({
           todoListId: listId,
           title,
-          description: description || undefined,
+          description: description ?? undefined,
           deadline: deadline ? new Date(deadline) : undefined,
         });
       }}
@@ -234,8 +234,8 @@ function EditListModal({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState(list.name);
-  const [description, setDescription] = useState(list.description || "");
-  const [icon, setIcon] = useState(list.icon || "");
+  const [description, setDescription] = useState(list.description ?? "");
+  const [icon, setIcon] = useState(list.icon ?? "");
   const utils = api.useUtils();
 
   const updateList = api.todo.updateList.useMutation({
@@ -250,8 +250,8 @@ function EditListModal({
   useEffect(() => {
     if (isOpen) {
       setName(list.name);
-      setDescription(list.description || "");
-      setIcon(list.icon || "");
+      setDescription(list.description ?? "");
+      setIcon(list.icon ?? "");
     }
   }, [list.name, list.description, list.icon, isOpen]);
 
@@ -263,8 +263,8 @@ function EditListModal({
       if (e.key === "Escape") {
         setIsOpen(false);
         setName(list.name);
-        setDescription(list.description || "");
-        setIcon(list.icon || "");
+        setDescription(list.description ?? "");
+        setIcon(list.icon ?? "");
       }
     };
 
@@ -303,8 +303,8 @@ function EditListModal({
               updateList.mutate({
                 id: listId,
                 name,
-                description: description || undefined,
-                icon: icon || undefined,
+                description: description ?? undefined,
+                icon: icon ?? undefined,
               });
             }}
             className="space-y-3"
@@ -345,8 +345,8 @@ function EditListModal({
                 onClick={() => {
                   setIsOpen(false);
                   setName(list.name);
-                  setDescription(list.description || "");
-                  setIcon(list.icon || "");
+                  setDescription(list.description ?? "");
+                  setIcon(list.icon ?? "");
                 }}
                 className="rounded bg-[#0f0f0f] px-4 py-2 text-sm font-semibold text-gray-500 transition hover:bg-[#141414] hover:text-gray-400"
               >

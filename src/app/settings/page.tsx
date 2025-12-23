@@ -63,7 +63,7 @@ export default function SettingsPage() {
         timeZoneName: "short",
       })
         .formatToParts(new Date())
-        .find((part) => part.type === "timeZoneName")?.value || browserTimezone;
+        .find((part) => part.type === "timeZoneName")?.value ?? browserTimezone;
       
       setAvailableTimezones([
         { value: browserTimezone, label: `${browserTimezone} (${browserTzLabel})` },
@@ -96,9 +96,9 @@ export default function SettingsPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     updateSettings.mutate({
-      notificationTime: notificationTime || null,
+      notificationTime: notificationTime ?? null,
       notificationDays: selectedDays.length > 0 ? selectedDays : null,
-      timezone: timezone || null,
+      timezone: timezone ?? null,
     });
   };
 

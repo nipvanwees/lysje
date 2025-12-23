@@ -48,8 +48,9 @@ export const userRouter = createTRPCRouter({
 
       if (input.notificationDays !== undefined) {
         updateData.notificationDays =
-          input.notificationDays.length > 0
+          input.notificationDays ? input.notificationDays.length > 0
             ? input.notificationDays.join(",")
+            : null
             : null;
       }
 

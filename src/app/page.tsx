@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { auth } from "~/server/better-auth";
+// import { auth } from "~/server/better-auth";
 import { getSession } from "~/server/better-auth/server";
 import { createCaller } from "~/server/api/root";
 import { createTRPCContext } from "~/server/api/trpc";
