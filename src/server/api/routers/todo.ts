@@ -6,12 +6,13 @@ import {
 } from "~/server/api/trpc";
 
 export const todoRouter = createTRPCRouter({
-  // Get all todo lists for the current user
+  // Get all todo lists for the current user (only non-completed items)
   getAllLists: protectedProcedure.query(async ({ ctx }) => {
     return ctx.db.todoList.findMany({
       where: { userId: ctx.session.user.id },
       include: {
         items: {
+          where: { done: false },
           orderBy: [{ order: "asc" }, { createdAt: "asc" }],
         },
       },
