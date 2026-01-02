@@ -7321,8 +7321,18 @@ export namespace Prisma {
 
   export type AggregateListItem = {
     _count: ListItemCountAggregateOutputType | null
+    _avg: ListItemAvgAggregateOutputType | null
+    _sum: ListItemSumAggregateOutputType | null
     _min: ListItemMinAggregateOutputType | null
     _max: ListItemMaxAggregateOutputType | null
+  }
+
+  export type ListItemAvgAggregateOutputType = {
+    order: number | null
+  }
+
+  export type ListItemSumAggregateOutputType = {
+    order: number | null
   }
 
   export type ListItemMinAggregateOutputType = {
@@ -7331,6 +7341,7 @@ export namespace Prisma {
     description: string | null
     deadline: Date | null
     done: boolean | null
+    order: number | null
     createdAt: Date | null
     updatedAt: Date | null
     todoListId: string | null
@@ -7342,6 +7353,7 @@ export namespace Prisma {
     description: string | null
     deadline: Date | null
     done: boolean | null
+    order: number | null
     createdAt: Date | null
     updatedAt: Date | null
     todoListId: string | null
@@ -7353,6 +7365,7 @@ export namespace Prisma {
     description: number
     deadline: number
     done: number
+    order: number
     createdAt: number
     updatedAt: number
     todoListId: number
@@ -7360,12 +7373,21 @@ export namespace Prisma {
   }
 
 
+  export type ListItemAvgAggregateInputType = {
+    order?: true
+  }
+
+  export type ListItemSumAggregateInputType = {
+    order?: true
+  }
+
   export type ListItemMinAggregateInputType = {
     id?: true
     title?: true
     description?: true
     deadline?: true
     done?: true
+    order?: true
     createdAt?: true
     updatedAt?: true
     todoListId?: true
@@ -7377,6 +7399,7 @@ export namespace Prisma {
     description?: true
     deadline?: true
     done?: true
+    order?: true
     createdAt?: true
     updatedAt?: true
     todoListId?: true
@@ -7388,6 +7411,7 @@ export namespace Prisma {
     description?: true
     deadline?: true
     done?: true
+    order?: true
     createdAt?: true
     updatedAt?: true
     todoListId?: true
@@ -7432,6 +7456,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: ListItemAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ListItemSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: ListItemMinAggregateInputType
@@ -7462,6 +7498,8 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: ListItemCountAggregateInputType | true
+    _avg?: ListItemAvgAggregateInputType
+    _sum?: ListItemSumAggregateInputType
     _min?: ListItemMinAggregateInputType
     _max?: ListItemMaxAggregateInputType
   }
@@ -7472,10 +7510,13 @@ export namespace Prisma {
     description: string | null
     deadline: Date | null
     done: boolean
+    order: number
     createdAt: Date
     updatedAt: Date
     todoListId: string
     _count: ListItemCountAggregateOutputType | null
+    _avg: ListItemAvgAggregateOutputType | null
+    _sum: ListItemSumAggregateOutputType | null
     _min: ListItemMinAggregateOutputType | null
     _max: ListItemMaxAggregateOutputType | null
   }
@@ -7500,6 +7541,7 @@ export namespace Prisma {
     description?: boolean
     deadline?: boolean
     done?: boolean
+    order?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     todoListId?: boolean
@@ -7514,12 +7556,13 @@ export namespace Prisma {
     description?: boolean
     deadline?: boolean
     done?: boolean
+    order?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     todoListId?: boolean
   }
 
-  export type ListItemOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "description" | "deadline" | "done" | "createdAt" | "updatedAt" | "todoListId", ExtArgs["result"]["listItem"]>
+  export type ListItemOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "description" | "deadline" | "done" | "order" | "createdAt" | "updatedAt" | "todoListId", ExtArgs["result"]["listItem"]>
   export type ListItemInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     todoList?: boolean | TodoListDefaultArgs<ExtArgs>
   }
@@ -7535,6 +7578,7 @@ export namespace Prisma {
       description: string | null
       deadline: Date | null
       done: boolean
+      order: number
       createdAt: Date
       updatedAt: Date
       todoListId: string
@@ -7913,6 +7957,7 @@ export namespace Prisma {
     readonly description: FieldRef<"ListItem", 'String'>
     readonly deadline: FieldRef<"ListItem", 'DateTime'>
     readonly done: FieldRef<"ListItem", 'Boolean'>
+    readonly order: FieldRef<"ListItem", 'Int'>
     readonly createdAt: FieldRef<"ListItem", 'DateTime'>
     readonly updatedAt: FieldRef<"ListItem", 'DateTime'>
     readonly todoListId: FieldRef<"ListItem", 'String'>
@@ -8382,6 +8427,7 @@ export namespace Prisma {
     description: 'description',
     deadline: 'deadline',
     done: 'done',
+    order: 'order',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     todoListId: 'todoListId'
@@ -8514,6 +8560,13 @@ export namespace Prisma {
    * Reference to a field of type 'Int'
    */
   export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+  /**
+   * Reference to a field of type 'Float'
+   */
+  export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
     
   /**
    * Deep Input Types
@@ -8969,6 +9022,7 @@ export namespace Prisma {
     description?: StringNullableFilter<"ListItem"> | string | null
     deadline?: DateTimeNullableFilter<"ListItem"> | Date | string | null
     done?: BoolFilter<"ListItem"> | boolean
+    order?: IntFilter<"ListItem"> | number
     createdAt?: DateTimeFilter<"ListItem"> | Date | string
     updatedAt?: DateTimeFilter<"ListItem"> | Date | string
     todoListId?: StringFilter<"ListItem"> | string
@@ -8981,6 +9035,7 @@ export namespace Prisma {
     description?: SortOrderInput | SortOrder
     deadline?: SortOrderInput | SortOrder
     done?: SortOrder
+    order?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     todoListId?: SortOrder
@@ -8997,6 +9052,7 @@ export namespace Prisma {
     description?: StringNullableFilter<"ListItem"> | string | null
     deadline?: DateTimeNullableFilter<"ListItem"> | Date | string | null
     done?: BoolFilter<"ListItem"> | boolean
+    order?: IntFilter<"ListItem"> | number
     createdAt?: DateTimeFilter<"ListItem"> | Date | string
     updatedAt?: DateTimeFilter<"ListItem"> | Date | string
     todoListId?: StringFilter<"ListItem"> | string
@@ -9009,12 +9065,15 @@ export namespace Prisma {
     description?: SortOrderInput | SortOrder
     deadline?: SortOrderInput | SortOrder
     done?: SortOrder
+    order?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     todoListId?: SortOrder
     _count?: ListItemCountOrderByAggregateInput
+    _avg?: ListItemAvgOrderByAggregateInput
     _max?: ListItemMaxOrderByAggregateInput
     _min?: ListItemMinOrderByAggregateInput
+    _sum?: ListItemSumOrderByAggregateInput
   }
 
   export type ListItemScalarWhereWithAggregatesInput = {
@@ -9026,6 +9085,7 @@ export namespace Prisma {
     description?: StringNullableWithAggregatesFilter<"ListItem"> | string | null
     deadline?: DateTimeNullableWithAggregatesFilter<"ListItem"> | Date | string | null
     done?: BoolWithAggregatesFilter<"ListItem"> | boolean
+    order?: IntWithAggregatesFilter<"ListItem"> | number
     createdAt?: DateTimeWithAggregatesFilter<"ListItem"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"ListItem"> | Date | string
     todoListId?: StringWithAggregatesFilter<"ListItem"> | string
@@ -9522,6 +9582,7 @@ export namespace Prisma {
     description?: string | null
     deadline?: Date | string | null
     done?: boolean
+    order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     todoList: TodoListCreateNestedOneWithoutItemsInput
@@ -9533,6 +9594,7 @@ export namespace Prisma {
     description?: string | null
     deadline?: Date | string | null
     done?: boolean
+    order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     todoListId: string
@@ -9544,6 +9606,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     deadline?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     done?: BoolFieldUpdateOperationsInput | boolean
+    order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     todoList?: TodoListUpdateOneRequiredWithoutItemsNestedInput
@@ -9555,6 +9618,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     deadline?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     done?: BoolFieldUpdateOperationsInput | boolean
+    order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     todoListId?: StringFieldUpdateOperationsInput | string
@@ -9566,6 +9630,7 @@ export namespace Prisma {
     description?: string | null
     deadline?: Date | string | null
     done?: boolean
+    order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     todoListId: string
@@ -9577,6 +9642,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     deadline?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     done?: BoolFieldUpdateOperationsInput | boolean
+    order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -9587,6 +9653,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     deadline?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     done?: BoolFieldUpdateOperationsInput | boolean
+    order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     todoListId?: StringFieldUpdateOperationsInput | string
@@ -10018,6 +10085,17 @@ export namespace Prisma {
     userId?: SortOrder
   }
 
+  export type IntFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[]
+    notIn?: number[]
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntFilter<$PrismaModel> | number
+  }
+
   export type TodoListScalarRelationFilter = {
     is?: TodoListWhereInput
     isNot?: TodoListWhereInput
@@ -10035,9 +10113,14 @@ export namespace Prisma {
     description?: SortOrder
     deadline?: SortOrder
     done?: SortOrder
+    order?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     todoListId?: SortOrder
+  }
+
+  export type ListItemAvgOrderByAggregateInput = {
+    order?: SortOrder
   }
 
   export type ListItemMaxOrderByAggregateInput = {
@@ -10046,6 +10129,7 @@ export namespace Prisma {
     description?: SortOrder
     deadline?: SortOrder
     done?: SortOrder
+    order?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     todoListId?: SortOrder
@@ -10057,9 +10141,30 @@ export namespace Prisma {
     description?: SortOrder
     deadline?: SortOrder
     done?: SortOrder
+    order?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     todoListId?: SortOrder
+  }
+
+  export type ListItemSumOrderByAggregateInput = {
+    order?: SortOrder
+  }
+
+  export type IntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[]
+    notIn?: number[]
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
   }
 
   export type UserCreateNestedOneWithoutPostsInput = {
@@ -10354,6 +10459,14 @@ export namespace Prisma {
     connect?: TodoListWhereUniqueInput
   }
 
+  export type IntFieldUpdateOperationsInput = {
+    set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
   export type TodoListUpdateOneRequiredWithoutItemsNestedInput = {
     create?: XOR<TodoListCreateWithoutItemsInput, TodoListUncheckedCreateWithoutItemsInput>
     connectOrCreate?: TodoListCreateOrConnectWithoutItemsInput
@@ -10511,6 +10624,33 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedDateTimeNullableFilter<$PrismaModel>
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[]
+    notIn?: number[]
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type NestedFloatFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[]
+    notIn?: number[]
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatFilter<$PrismaModel> | number
   }
 
   export type UserCreateWithoutPostsInput = {
@@ -11041,6 +11181,7 @@ export namespace Prisma {
     description?: string | null
     deadline?: Date | string | null
     done?: boolean
+    order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -11051,6 +11192,7 @@ export namespace Prisma {
     description?: string | null
     deadline?: Date | string | null
     done?: boolean
+    order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -11133,6 +11275,7 @@ export namespace Prisma {
     description?: StringNullableFilter<"ListItem"> | string | null
     deadline?: DateTimeNullableFilter<"ListItem"> | Date | string | null
     done?: BoolFilter<"ListItem"> | boolean
+    order?: IntFilter<"ListItem"> | number
     createdAt?: DateTimeFilter<"ListItem"> | Date | string
     updatedAt?: DateTimeFilter<"ListItem"> | Date | string
     todoListId?: StringFilter<"ListItem"> | string
@@ -11366,6 +11509,7 @@ export namespace Prisma {
     description?: string | null
     deadline?: Date | string | null
     done?: boolean
+    order?: number
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -11376,6 +11520,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     deadline?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     done?: BoolFieldUpdateOperationsInput | boolean
+    order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -11386,6 +11531,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     deadline?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     done?: BoolFieldUpdateOperationsInput | boolean
+    order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -11396,6 +11542,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     deadline?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     done?: BoolFieldUpdateOperationsInput | boolean
+    order?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

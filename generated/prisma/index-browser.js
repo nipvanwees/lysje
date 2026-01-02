@@ -194,6 +194,7 @@ exports.Prisma.ListItemScalarFieldEnum = {
   description: 'description',
   deadline: 'deadline',
   done: 'done',
+  order: 'order',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   todoListId: 'todoListId'

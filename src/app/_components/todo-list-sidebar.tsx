@@ -1,70 +1,138 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
+import { useSidebar } from "~/app/_components/sidebar-provider";
 
 export function TodoListSidebar() {
   const pathname = usePathname();
   const { data: lists, isLoading } = api.todo.getAllLists.useQuery();
+  const { isOpen, close } = useSidebar();
 
-  if (isLoading) {
-    return (
-      <div className="w-56">
-        <div className="text-gray-400">Loading...</div>
-      </div>
-    );
-  }
+  // Close sidebar on mobile when navigating
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      close();
+    }
+  }, [pathname, close]);
+
+  // Prevent body scroll when sidebar is open on mobile
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (isOpen && window.innerWidth < 768) {
+        document.body.style.overflow = "hidden";
+      } else {
+        document.body.style.overflow = "";
+      }
+      return () => {
+        document.body.style.overflow = "";
+      };
+    }
+  }, [isOpen]);
+
+  const handleLinkClick = () => {
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      close();
+    }
+  };
 
   return (
-    <div className="w-56 space-y-2">
-      <CreateTodoListForm />
-      <div className="space-y-1">
-        {lists?.map((list) => {
-          const isActive = pathname === `/lists/${list.id}`;
-          return (
-            <Link
-              key={list.id}
-              href={`/lists/${list.id}`}
-              className={`block w-full rounded px-3 py-2 text-left transition ${
-                isActive
-                  ? "bg-[#1a1a1a] text-gray-100"
-                  : "text-gray-400 hover:bg-[#141414] hover:text-gray-300"
-              }`}
+    <>
+      {/* Mobile backdrop */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={close}
+          aria-hidden="true"
+        />
+      )}
+      
+      {/* Sidebar */}
+      <div
+        className={`
+          fixed left-0 top-0 z-50 h-full w-64 space-y-2 bg-[#0a0a0a] p-4 transition-transform duration-300 ease-in-out
+          md:relative md:z-auto md:w-56 md:p-0
+          ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+        `}
+      >
+        {isLoading ? (
+          <div className="text-gray-400">Loading...</div>
+        ) : (
+          <>
+        <div className="mb-4 flex items-center justify-between md:hidden">
+          <h2 className="text-lg font-semibold text-gray-100">Menu</h2>
+          <button
+            onClick={close}
+            className="rounded p-2 text-gray-400 transition hover:bg-[#141414] hover:text-gray-300"
+            aria-label="Close menu"
+          >
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
             >
-              <div className="flex items-center gap-2">
-                {list.icon && <span className="text-2xl">{list.icon}</span>}
-                <div className="flex-1">
-                  <h3 className="font-semibold">{list.name}</h3>
-                  {list.description && (
-                    <p className="text-sm text-gray-500">{list.description}</p>
-                  )}
+              <path d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <CreateTodoListForm />
+        <div className="space-y-1 max-h-[calc(100vh-200px)] overflow-y-auto">
+          {lists?.map((list) => {
+            const isActive = pathname === `/lists/${list.id}`;
+            return (
+              <Link
+                key={list.id}
+                href={`/lists/${list.id}`}
+                onClick={handleLinkClick}
+                className={`block w-full rounded px-3 py-2 text-left transition ${
+                  isActive
+                    ? "bg-[#1a1a1a] text-gray-100"
+                    : "text-gray-400 hover:bg-[#141414] hover:text-gray-300"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  {list.icon && <span className="text-2xl">{list.icon}</span>}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold truncate">{list.name}</h3>
+                    {list.description && (
+                      <p className="text-sm text-gray-500 truncate">{list.description}</p>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <p className="mt-2 text-xs text-gray-600">
-                {list.items.length} items
-              </p>
-            </Link>
-          );
-        })}
+                <p className="mt-2 text-xs text-gray-600">
+                  {list.items.length} items
+                </p>
+              </Link>
+            );
+          })}
+        </div>
+        <div className="pt-4 border-t border-[#252525]">
+          <Link
+            href="/settings"
+            onClick={handleLinkClick}
+            className={`block w-full rounded px-3 py-2 text-left transition ${
+              pathname === "/settings"
+                ? "bg-[#1a1a1a] text-gray-100"
+                : "text-gray-400 hover:bg-[#141414] hover:text-gray-300"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-lg">⚙️</span>
+              <span className="text-sm font-semibold">Settings</span>
+            </div>
+          </Link>
+        </div>
+          </>
+        )}
       </div>
-      <div className="pt-4 border-t border-[#252525]">
-        <Link
-          href="/settings"
-          className={`block w-full rounded px-3 py-2 text-left transition ${
-            pathname === "/settings"
-              ? "bg-[#1a1a1a] text-gray-100"
-              : "text-gray-400 hover:bg-[#141414] hover:text-gray-300"
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            <span className="text-lg">⚙️</span>
-            <span className="text-sm font-semibold">Settings</span>
-          </div>
-        </Link>
-      </div>
-    </div>
+    </>
   );
 }
 

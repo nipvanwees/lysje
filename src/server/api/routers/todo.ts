@@ -12,7 +12,7 @@ export const todoRouter = createTRPCRouter({
       where: { userId: ctx.session.user.id },
       include: {
         items: {
-          orderBy: { createdAt: "asc" },
+          orderBy: [{ order: "asc" }, { createdAt: "asc" }],
         },
       },
       orderBy: { createdAt: "desc" },
@@ -31,7 +31,7 @@ export const todoRouter = createTRPCRouter({
         include: {
           items: {
             where: { done: false },
-            orderBy: { createdAt: "asc" },
+            orderBy: [{ order: "asc" }, { createdAt: "asc" }],
           },
         },
       });
@@ -64,7 +64,7 @@ export const todoRouter = createTRPCRouter({
           todoListId: input.listId,
           done: true,
         },
-        orderBy: { updatedAt: "desc" }, // Most recently completed first
+        orderBy: { updatedAt: "desc" }, // Most recently completed first (completed items don't use order)
       });
     }),
 
@@ -157,12 +157,22 @@ export const todoRouter = createTRPCRouter({
         throw new Error("Todo list not found");
       }
 
+      // Get the maximum order value for items in this list
+      const maxOrderItem = await ctx.db.listItem.findFirst({
+        where: { todoListId: input.todoListId, done: false },
+        orderBy: { order: "desc" },
+        select: { order: true },
+      });
+
+      const newOrder = maxOrderItem ? maxOrderItem.order + 1 : 0;
+
       return ctx.db.listItem.create({
         data: {
           title: input.title,
           description: input.description,
           deadline: input.deadline,
           todoListId: input.todoListId,
+          order: newOrder,
         },
       });
     }),
@@ -234,6 +244,52 @@ export const todoRouter = createTRPCRouter({
         where: { id: input.id },
         data: { done: !item.done },
       });
+    }),
+
+  // Reorder items in a list
+  reorderItems: protectedProcedure
+    .input(
+      z.object({
+        listId: z.string(),
+        itemIds: z.array(z.string()), // Array of item IDs in the new order
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Verify ownership of the todo list
+      const list = await ctx.db.todoList.findFirst({
+        where: {
+          id: input.listId,
+          userId: ctx.session.user.id,
+        },
+      });
+
+      if (!list) {
+        throw new Error("Todo list not found");
+      }
+
+      // Verify all items belong to this list
+      const items = await ctx.db.listItem.findMany({
+        where: {
+          id: { in: input.itemIds },
+          todoListId: input.listId,
+        },
+      });
+
+      if (items.length !== input.itemIds.length) {
+        throw new Error("Some items not found or don't belong to this list");
+      }
+
+      // Update order for each item based on its position in the array
+      const updates = input.itemIds.map((itemId, index) =>
+        ctx.db.listItem.update({
+          where: { id: itemId },
+          data: { order: index },
+        }),
+      );
+
+      await Promise.all(updates);
+
+      return { success: true };
     }),
 });
 

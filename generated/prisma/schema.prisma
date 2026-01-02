@@ -113,11 +113,13 @@ model ListItem {
   description String? //@db.Text
   deadline    DateTime?
   done        Boolean   @default(false)
+  order       Int       @default(0)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   todoListId  String
   todoList    TodoList  @relation(fields: [todoListId], references: [id], onDelete: Cascade)
 
   @@index([todoListId])
+  @@index([todoListId, order])
   @@map("list_item")
 }
