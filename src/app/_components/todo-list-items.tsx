@@ -21,6 +21,145 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { api } from "~/trpc/react";
 
+// Editable title component with optimistic updates
+function EditableTitle({
+  itemId,
+  listId,
+  initialTitle,
+  isCompleted = false,
+  className = "",
+}: {
+  itemId: string;
+  listId: string;
+  initialTitle: string;
+  isCompleted?: boolean;
+  className?: string;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [title, setTitle] = useState(initialTitle);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const utils = api.useUtils();
+
+  // Update local state when initialTitle changes
+  useEffect(() => {
+    setTitle(initialTitle);
+  }, [initialTitle]);
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (isEditing) {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }
+  }, [isEditing]);
+
+  const updateItem = api.todo.updateItem.useMutation({
+    onMutate: async (variables) => {
+      const { id, title: newTitle } = variables;
+      // Cancel any outgoing refetches
+      await utils.todo.getList.cancel({ id: listId });
+      if (isCompleted) {
+        await utils.todo.getCompletedItems.cancel({ listId });
+      }
+
+      // Snapshot the previous values
+      const previousList = utils.todo.getList.getData({ id: listId });
+      const previousCompleted = isCompleted
+        ? utils.todo.getCompletedItems.getData({ listId })
+        : undefined;
+
+      // Only update if title is provided
+      if (newTitle !== undefined) {
+        // Optimistically update in active list
+        utils.todo.getList.setData({ id: listId }, (old) => {
+          if (!old || !("items" in old)) return old;
+          return {
+            ...old,
+            items: old.items.map((item) =>
+              item.id === id ? { ...item, title: newTitle } : item
+            ),
+          };
+        });
+
+        // Optimistically update in completed list if applicable
+        if (isCompleted && previousCompleted) {
+          utils.todo.getCompletedItems.setData({ listId }, (old) => {
+            if (!old) return old;
+            return old.map((item) =>
+              item.id === id ? { ...item, title: newTitle } : item
+            );
+          });
+        }
+      }
+
+      return { previousList, previousCompleted };
+    },
+    onError: (_err, _variables, context) => {
+      // Rollback on error
+      if (context?.previousList) {
+        utils.todo.getList.setData({ id: listId }, context.previousList);
+      }
+      if (context?.previousCompleted) {
+        utils.todo.getCompletedItems.setData({ listId }, context.previousCompleted);
+      }
+      // Reset local state
+      setTitle(initialTitle);
+    },
+    onSettled: () => {
+      // Refetch to ensure consistency
+      void utils.todo.getList.invalidate({ id: listId });
+      void utils.todo.getCompletedItems.invalidate({ listId });
+    },
+  });
+
+  const handleSubmit = () => {
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) {
+      setTitle(initialTitle);
+      setIsEditing(false);
+      return;
+    }
+
+    if (trimmedTitle !== initialTitle) {
+      updateItem.mutate({ id: itemId, title: trimmedTitle });
+    }
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSubmit();
+    } else if (e.key === "Escape") {
+      setTitle(initialTitle);
+      setIsEditing(false);
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <input
+        ref={inputRef}
+        type="text"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        onBlur={handleSubmit}
+        onKeyDown={handleKeyDown}
+        className={`w-full rounded border border-[#333] bg-[#0f0f0f] px-2 py-1 text-sm font-semibold text-gray-200 focus:border-[#444] focus:outline-none ${isCompleted ? "text-gray-600" : ""}`}
+      />
+    );
+  }
+
+  return (
+    <h3
+      onClick={() => setIsEditing(true)}
+      className={`cursor-text font-semibold break-words hover:opacity-80 ${className || "text-gray-200"}`}
+    >
+      {title}
+    </h3>
+  );
+}
+
 export function TodoListItems({ listId }: { listId: string }) {
   const router = useRouter();
   const { data: list, isLoading } = api.todo.getList.useQuery({ id: listId });
@@ -356,6 +495,7 @@ function SortableItemsList({
               onToggle={() => onToggle(item.id)}
               onDelete={() => onDelete(item.id)}
               isDeleting={isDeleting}
+              listId={listId}
             />
           ))}
         </div>
@@ -369,6 +509,7 @@ function SortableTodoItem({
   onToggle,
   onDelete,
   isDeleting,
+  listId,
 }: {
   item: {
     id: string;
@@ -384,6 +525,7 @@ function SortableTodoItem({
   onToggle: () => void;
   onDelete: () => void;
   isDeleting: boolean;
+  listId: string;
 }) {
   const {
     attributes,
@@ -436,7 +578,12 @@ function SortableTodoItem({
           className="mt-1 h-5 w-5 shrink-0 cursor-pointer rounded border-[#333] bg-[#0f0f0f] text-gray-400 focus:ring-0"
         />
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-200 break-words">{item.title}</h3>
+          <EditableTitle
+            itemId={item.id}
+            listId={listId}
+            initialTitle={item.title}
+            isCompleted={false}
+          />
           {item.description && (
             <p className="mt-1 text-sm text-gray-500 break-words">{item.description}</p>
           )}
@@ -611,9 +758,13 @@ function CompletedItemsSection({ listId }: { listId: string }) {
                   className="mt-1 h-5 w-5 cursor-pointer rounded border-[#333] bg-[#0f0f0f] text-gray-400 focus:ring-0"
                 />
                 <div className="flex-1">
-                  <h3 className="font-semibold line-through text-gray-600">
-                    {item.title}
-                  </h3>
+                  <EditableTitle
+                    itemId={item.id}
+                    listId={listId}
+                    initialTitle={item.title}
+                    isCompleted={true}
+                    className="line-through text-gray-600"
+                  />
                   {item.description && (
                     <p className="mt-1 text-sm text-gray-600">{item.description}</p>
                   )}
