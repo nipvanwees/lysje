@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
@@ -10,30 +10,43 @@ export function TodoListSidebar() {
   const pathname = usePathname();
   const { data: lists, isLoading } = api.todo.getAllLists.useQuery();
   const { isOpen, close } = useSidebar();
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Close sidebar on mobile when navigating
+  // Only set mounted after hydration to avoid hydration mismatches
   useEffect(() => {
-    if (typeof window !== "undefined" && window.innerWidth < 768) {
-      close();
+    setIsMounted(true);
+  }, []);
+
+  // Close sidebar on mobile when navigating (but not on initial mount)
+  const prevPathnameRef = useRef<string | null>(null);
+  useEffect(() => {
+    // Skip on initial mount (when prevPathnameRef.current is null)
+    if (prevPathnameRef.current !== null && isOpen && prevPathnameRef.current !== pathname) {
+      // Only close on mobile
+      if (isMounted && window.innerWidth < 768) {
+        close();
+      }
     }
-  }, [pathname, close]);
+    prevPathnameRef.current = pathname;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, isMounted]);
 
   // Prevent body scroll when sidebar is open on mobile
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      if (isOpen && window.innerWidth < 768) {
-        document.body.style.overflow = "hidden";
-      } else {
-        document.body.style.overflow = "";
-      }
-      return () => {
-        document.body.style.overflow = "";
-      };
+    if (!isMounted) return;
+    
+    if (isOpen && window.innerWidth < 768) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
     }
-  }, [isOpen]);
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen, isMounted]);
 
   const handleLinkClick = () => {
-    if (typeof window !== "undefined" && window.innerWidth < 768) {
+    if (isMounted && window.innerWidth < 768) {
       close();
     }
   };
@@ -43,19 +56,21 @@ export function TodoListSidebar() {
       {/* Mobile backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 md:hidden"
-          onClick={close}
+          className="fixed inset-0 z-[90] bg-black/50 md:hidden"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            close();
+          }}
           aria-hidden="true"
         />
       )}
       
       {/* Sidebar */}
       <div
-        className={`
-          fixed left-0 top-0 z-50 h-full w-64 space-y-2 bg-[#0a0a0a] p-4 transition-transform duration-300 ease-in-out
-          md:relative md:z-auto md:w-56 md:p-0
-          ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
-        `}
+        className={`fixed left-0 top-0 z-[100] h-full w-64 space-y-2 bg-[#0a0a0a] p-4 transition-transform duration-300 ease-in-out md:relative md:z-auto md:w-56 md:p-0 md:translate-x-0 ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
         {isLoading ? (
           <div className="text-gray-400">Loading...</div>
@@ -64,9 +79,14 @@ export function TodoListSidebar() {
         <div className="mb-4 flex items-center justify-between md:hidden">
           <h2 className="text-lg font-semibold text-gray-100">Menu</h2>
           <button
-            onClick={close}
-            className="rounded p-2 text-gray-400 transition hover:bg-[#141414] hover:text-gray-300"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              close();
+            }}
+            className="rounded p-2 text-gray-400 transition hover:bg-[#141414] hover:text-gray-300 z-10"
             aria-label="Close menu"
+            type="button"
           >
             <svg
               className="h-6 w-6"
