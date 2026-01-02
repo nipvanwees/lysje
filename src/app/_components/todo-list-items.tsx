@@ -44,6 +44,7 @@ export function TodoListItems({ listId }: { listId: string }) {
           description: string | null;
           deadline: Date | null;
           done: boolean;
+          order: number;
           createdAt: Date;
           updatedAt: Date;
           todoListId: string;
@@ -54,10 +55,9 @@ export function TodoListItems({ listId }: { listId: string }) {
           // Item is being checked - remove it from active list
           utils.todo.getList.setData({ id: listId }, (old) => {
             if (!old || !("items" in old)) return old;
-            const oldItems = old.items as Array<{ id: string; [key: string]: unknown }>;
             return {
               ...old,
-              items: oldItems.filter((i) => i.id !== id),
+              items: old.items.filter((i) => i.id !== id),
             };
           });
 
@@ -68,6 +68,7 @@ export function TodoListItems({ listId }: { listId: string }) {
             description: item.description,
             deadline: item.deadline,
             done: true,
+            order: item.order,
             createdAt: item.createdAt,
             updatedAt: new Date(),
             todoListId: item.todoListId,
@@ -94,7 +95,7 @@ export function TodoListItems({ listId }: { listId: string }) {
 
           // Add it back to active list with a new order (at the end)
           const previousItems = previousList && "items" in previousList 
-            ? (previousList.items as Array<{ order?: number; [key: string]: unknown }>)
+            ? previousList.items
             : [];
           const maxOrder = previousItems.length > 0
             ? Math.max(...previousItems.map((i) => i.order ?? 0))
@@ -106,14 +107,13 @@ export function TodoListItems({ listId }: { listId: string }) {
           };
           utils.todo.getList.setData({ id: listId }, (old) => {
             if (!old || !("items" in old)) return old;
-            const oldItems = old.items as Array<{ id: string; order?: number; [key: string]: unknown }>;
             // Check if already exists (shouldn't happen, but be safe)
-            const exists = oldItems.some((i) => i.id === id);
+            const exists = old.items.some((i) => i.id === id);
             if (exists) return old;
             return {
               ...old,
-              items: [...oldItems, activeItem].sort(
-                (a, b) => ((a.order as number) ?? 0) - ((b.order as number) ?? 0)
+              items: [...old.items, activeItem].sort(
+                (a, b) => (a.order ?? 0) - (b.order ?? 0)
               ),
             };
           });
@@ -152,10 +152,9 @@ export function TodoListItems({ listId }: { listId: string }) {
       // Optimistically remove from active list
       utils.todo.getList.setData({ id: listId }, (old) => {
         if (!old || !("items" in old)) return old;
-        const oldItems = old.items as Array<{ id: string; [key: string]: unknown }>;
         return {
           ...old,
-          items: oldItems.filter((item) => item.id !== id),
+          items: old.items.filter((item) => item.id !== id),
         };
       });
 
@@ -230,7 +229,7 @@ export function TodoListItems({ listId }: { listId: string }) {
 
       {"items" in list && Array.isArray(list.items) && (
         <SortableItemsList
-          items={list.items as Array<{ id: string; title: string; description: string | null; deadline: Date | null; done: boolean }>}
+          items={list.items as Array<{ id: string; title: string; description: string | null; deadline: Date | null; done: boolean; order: number; createdAt: Date; updatedAt: Date; todoListId: string }>}
           listId={listId}
           onToggle={(id) => toggleItem.mutate({ id })}
           onDelete={(id) => deleteItem.mutate({ id })}
@@ -258,6 +257,10 @@ function SortableItemsList({
     description: string | null;
     deadline: Date | null;
     done: boolean;
+    order: number;
+    createdAt: Date;
+    updatedAt: Date;
+    todoListId: string;
   }>;
   listId: string;
   onToggle: (id: string) => void;
@@ -292,10 +295,9 @@ function SortableItemsList({
           .map((id) => itemMap.get(id))
           .filter((item): item is NonNullable<typeof item> => item !== undefined);
 
-        const oldItems = old.items as Array<{ [key: string]: unknown }>;
         return {
           ...old,
-          items: reorderedItems as typeof oldItems,
+          items: reorderedItems,
         };
       });
 
@@ -374,6 +376,10 @@ function SortableTodoItem({
     description: string | null;
     deadline: Date | null;
     done: boolean;
+    order: number;
+    createdAt: Date;
+    updatedAt: Date;
+    todoListId: string;
   };
   onToggle: () => void;
   onDelete: () => void;
@@ -490,19 +496,18 @@ function CompletedItemsSection({ listId }: { listId: string }) {
           // Add to active list with a new order (at the end)
           const currentList = utils.todo.getList.getData({ id: listId });
           const currentItems = currentList && "items" in currentList
-            ? (currentList.items as Array<{ order?: number; [key: string]: unknown }>)
+            ? currentList.items
             : [];
           const maxOrder = currentItems.length > 0
-            ? Math.max(...currentItems.map((i) => (i.order as number) ?? 0))
+            ? Math.max(...currentItems.map((i) => i.order ?? 0))
             : -1;
           const newItem = { ...item, done: false, order: maxOrder + 1 };
           utils.todo.getList.setData({ id: listId }, (old) => {
             if (!old || !("items" in old)) return old;
-            const oldItems = old.items as Array<{ order?: number; [key: string]: unknown }>;
             return {
               ...old,
-              items: [...oldItems, newItem].sort(
-                (a, b) => ((a.order as number) ?? 0) - ((b.order as number) ?? 0)
+              items: [...old.items, newItem].sort(
+                (a, b) => (a.order ?? 0) - (b.order ?? 0)
               ),
             };
           });
@@ -658,10 +663,10 @@ function CreateListItemForm({ listId }: { listId: string }) {
       
       // Calculate the new order (highest order + 1, or 0 if no items)
       const previousItems = previousList && "items" in previousList
-        ? (previousList.items as Array<{ order?: number; [key: string]: unknown }>)
+        ? previousList.items
         : [];
       const maxOrder = previousItems.length > 0
-        ? Math.max(...previousItems.map((item) => (item.order as number) ?? 0))
+        ? Math.max(...previousItems.map((item) => item.order ?? 0))
         : -1;
       const newOrder = maxOrder + 1;
 
@@ -680,10 +685,9 @@ function CreateListItemForm({ listId }: { listId: string }) {
       // Optimistically add the item
       utils.todo.getList.setData({ id: listId }, (old) => {
         if (!old || !("items" in old)) return old;
-        const oldItems = old.items as Array<{ [key: string]: unknown }>;
         return {
           ...old,
-          items: [...oldItems, optimisticItem],
+          items: [...old.items, optimisticItem],
         };
       });
 
@@ -716,10 +720,9 @@ function CreateListItemForm({ listId }: { listId: string }) {
       // Replace the temporary item with the real one from server
       utils.todo.getList.setData({ id: listId }, (old) => {
         if (!old || !context?.optimisticItem || !("items" in old)) return old;
-        const oldItems = old.items as Array<{ id: string; [key: string]: unknown }>;
         return {
           ...old,
-          items: oldItems.map((item) =>
+          items: old.items.map((item) =>
             item.id === context.optimisticItem.id
               ? {
                   ...data,
