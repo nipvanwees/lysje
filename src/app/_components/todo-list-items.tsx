@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   DndContext,
@@ -527,6 +527,7 @@ function SortableTodoItem({
   isDeleting: boolean;
   listId: string;
 }) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const {
     attributes,
     listeners,
@@ -543,72 +544,67 @@ function SortableTodoItem({
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className="rounded border border-[#1f1f1f] bg-[#141414] p-3 sm:p-4"
-    >
-      <div className="flex items-start gap-3">
-        <div
-          {...attributes}
-          {...listeners}
-          className="mt-1 cursor-grab active:cursor-grabbing touch-none"
-          aria-label="Drag to reorder"
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="text-gray-600"
+    <>
+      <div
+        ref={setNodeRef}
+        style={style}
+        className="rounded border border-[#1f1f1f] bg-[#141414] p-3 sm:p-4 cursor-pointer hover:bg-[#1a1a1a] transition-colors"
+        onClick={() => setIsModalOpen(true)}
+      >
+        <div className="flex items-start gap-3">
+          <div
+            {...attributes}
+            {...listeners}
+            className="mt-1 cursor-grab active:cursor-grabbing touch-none"
+            aria-label="Drag to reorder"
+            onClick={(e) => e.stopPropagation()}
           >
-            <circle cx="7" cy="5" r="1.5" fill="currentColor" />
-            <circle cx="13" cy="5" r="1.5" fill="currentColor" />
-            <circle cx="7" cy="10" r="1.5" fill="currentColor" />
-            <circle cx="13" cy="10" r="1.5" fill="currentColor" />
-            <circle cx="7" cy="15" r="1.5" fill="currentColor" />
-            <circle cx="13" cy="15" r="1.5" fill="currentColor" />
-          </svg>
-        </div>
-        <input
-          type="checkbox"
-          checked={item.done}
-          onChange={onToggle}
-          className="mt-1 h-5 w-5 shrink-0 cursor-pointer rounded border-[#333] bg-[#0f0f0f] text-gray-400 focus:ring-0"
-        />
-        <div className="flex-1 min-w-0">
-          <EditableTitle
-            itemId={item.id}
-            listId={listId}
-            initialTitle={item.title}
-            isCompleted={false}
-          />
-          {item.description && (
-            <p className="mt-1 text-sm text-gray-500 break-words">{item.description}</p>
-          )}
-          {item.deadline && (
-            <p
-              className={`mt-1 text-xs ${
-                new Date(item.deadline) < new Date()
-                  ? "text-red-500"
-                  : "text-gray-600"
-              }`}
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="text-gray-600"
             >
-              Deadline: {new Date(item.deadline).toLocaleDateString()}
-            </p>
-          )}
+              <circle cx="7" cy="5" r="1.5" fill="currentColor" />
+              <circle cx="13" cy="5" r="1.5" fill="currentColor" />
+              <circle cx="7" cy="10" r="1.5" fill="currentColor" />
+              <circle cx="13" cy="10" r="1.5" fill="currentColor" />
+              <circle cx="7" cy="15" r="1.5" fill="currentColor" />
+              <circle cx="13" cy="15" r="1.5" fill="currentColor" />
+            </svg>
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold break-words text-gray-200">
+              {item.title}
+            </h3>
+            {item.deadline && (
+              <p
+                className={`mt-1 text-xs ${
+                  new Date(item.deadline) < new Date()
+                    ? "text-red-500"
+                    : "text-gray-600"
+                }`}
+              >
+                Deadline: {new Date(item.deadline).toLocaleDateString()}
+              </p>
+            )}
+          </div>
         </div>
-        <button
-          onClick={onDelete}
-          className="shrink-0 text-xl text-gray-600 transition hover:text-gray-400 active:scale-90"
-          disabled={isDeleting}
-          aria-label="Delete item"
-        >
-          ×
-        </button>
       </div>
-    </div>
+      {isModalOpen && (
+        <TodoItemModal
+          item={item}
+          listId={listId}
+          onToggle={onToggle}
+          onDelete={onDelete}
+          isDeleting={isDeleting}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+        />
+      )}
+    </>
   );
 }
 
@@ -1040,6 +1036,291 @@ function CreateListItemForm({ listId }: { listId: string }) {
         </div>
       )}
     </form>
+  );
+}
+
+function TodoItemModal({
+  item,
+  listId,
+  onToggle,
+  onDelete,
+  isDeleting,
+  isOpen,
+  onClose,
+}: {
+  item: {
+    id: string;
+    title: string;
+    description: string | null;
+    deadline: Date | null;
+    done: boolean;
+    order: number;
+    createdAt: Date;
+    updatedAt: Date;
+    todoListId: string;
+  };
+  listId: string;
+  onToggle: () => void;
+  onDelete: () => void;
+  isDeleting: boolean;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const [title, setTitle] = useState(item.title);
+  const [description, setDescription] = useState(item.description ?? "");
+  const titleInputRef = useRef<HTMLInputElement>(null);
+  const descriptionTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const utils = api.useUtils();
+
+  // Update form values when item changes or modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setTitle(item.title);
+      setDescription(item.description ?? "");
+      // Focus title input when modal opens
+      setTimeout(() => titleInputRef.current?.focus(), 0);
+    }
+  }, [item.title, item.description, isOpen]);
+
+  const updateItem = api.todo.updateItem.useMutation({
+    onMutate: async (variables) => {
+      const { id, title: newTitle, description: newDescription } = variables;
+      // Cancel any outgoing refetches
+      await utils.todo.getList.cancel({ id: listId });
+      await utils.todo.getCompletedItems.cancel({ listId });
+
+      // Snapshot the previous values
+      const previousList = utils.todo.getList.getData({ id: listId });
+      const previousCompleted = utils.todo.getCompletedItems.getData({ listId });
+
+      // Optimistically update
+      if (newTitle !== undefined || newDescription !== undefined) {
+        utils.todo.getList.setData({ id: listId }, (old) => {
+          if (!old || !("items" in old)) return old;
+          return {
+            ...old,
+            items: old.items.map((item) =>
+              item.id === id
+                ? {
+                    ...item,
+                    ...(newTitle !== undefined && { title: newTitle }),
+                    ...(newDescription !== undefined && { description: newDescription }),
+                  }
+                : item
+            ),
+          };
+        });
+
+        if (previousCompleted) {
+          utils.todo.getCompletedItems.setData({ listId }, (old) => {
+            if (!old) return old;
+            return old.map((item) =>
+              item.id === id
+                ? {
+                    ...item,
+                    ...(newTitle !== undefined && { title: newTitle }),
+                    ...(newDescription !== undefined && { description: newDescription }),
+                  }
+                : item
+            );
+          });
+        }
+      }
+
+      return { previousList, previousCompleted };
+    },
+    onError: (_err, _variables, context) => {
+      // Rollback on error
+      if (context?.previousList) {
+        utils.todo.getList.setData({ id: listId }, context.previousList);
+      }
+      if (context?.previousCompleted) {
+        utils.todo.getCompletedItems.setData({ listId }, context.previousCompleted);
+      }
+      // Reset local state
+      setTitle(item.title);
+      setDescription(item.description ?? "");
+    },
+    onSettled: () => {
+      // Refetch to ensure consistency
+      void utils.todo.getList.invalidate({ id: listId });
+      void utils.todo.getCompletedItems.invalidate({ listId });
+    },
+  });
+
+  const handleSave = () => {
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) {
+      setTitle(item.title);
+      return;
+    }
+
+    const trimmedDescription = description.trim();
+    const hasChanges =
+      trimmedTitle !== item.title ||
+      trimmedDescription !== (item.description || "");
+
+    if (hasChanges) {
+      updateItem.mutate({
+        id: item.id,
+        title: trimmedTitle,
+        description: trimmedDescription || undefined,
+      });
+    }
+  };
+
+  const handleSaveAndClose = () => {
+    handleSave();
+    onClose();
+  };
+
+  const hasUnsavedChanges = useCallback(() => {
+    const trimmedTitle = title.trim();
+    const trimmedDescription = description.trim();
+    return (
+      trimmedTitle !== item.title ||
+      trimmedDescription !== (item.description || "")
+    );
+  }, [title, description, item.title, item.description]);
+
+  const handleCancel = useCallback(() => {
+    const trimmedTitle = title.trim();
+    const trimmedDescription = description.trim();
+    const hasChanges =
+      trimmedTitle !== item.title ||
+      trimmedDescription !== (item.description || "");
+    
+    if (hasChanges) {
+      if (!confirm("You have unsaved changes. Are you sure you want to leave?")) {
+        return;
+      }
+    }
+    setTitle(item.title);
+    setDescription(item.description ?? "");
+    onClose();
+  }, [title, description, item.title, item.description, onClose]);
+
+  // Handle escape key to close modal
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        handleCancel();
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [isOpen, handleCancel]);
+
+  const handleDelete = () => {
+    if (confirm("Are you sure you want to delete this item?")) {
+      onDelete();
+      onClose();
+    }
+  };
+
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <>
+      {/* Modal overlay */}
+      <div
+        className="fixed inset-0 z-40 bg-black/50"
+        onClick={handleCancel}
+      />
+      {/* Modal */}
+      <div 
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+        onClick={handleCancel}
+      >
+        <div
+          className="w-full max-w-2xl rounded-lg border border-[#1f1f1f] bg-[#141414] p-4 sm:p-6 shadow-xl my-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="mb-4 flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3 flex-1">
+              <input
+                type="checkbox"
+                checked={item.done}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  onToggle();
+                }}
+                className="h-5 w-5 shrink-0 cursor-pointer rounded border-[#333] bg-[#0f0f0f] text-gray-400 focus:ring-0"
+              />
+              <h3 className="text-xl font-bold text-gray-100">Edit Item</h3>
+            </div>
+            <button
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="shrink-0 rounded px-3 py-1.5 text-sm text-red-500 transition hover:bg-[#1a1a1a] hover:text-red-400 disabled:opacity-50"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-400">
+                Title
+              </label>
+              <input
+                ref={titleInputRef}
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full rounded border border-[#252525] bg-[#0f0f0f] px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-[#333] focus:outline-none"
+                placeholder="Item title"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-400">
+                Description
+              </label>
+              <textarea
+                ref={descriptionTextareaRef}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full min-h-[200px] rounded border border-[#252525] bg-[#0f0f0f] px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:border-[#333] focus:outline-none resize-y"
+                placeholder="Add notes, details, or any additional information..."
+              />
+            </div>
+
+            {item.deadline && (
+              <div>
+                <p className="text-xs text-gray-500">
+                  Deadline: {new Date(item.deadline).toLocaleDateString()}
+                </p>
+              </div>
+            )}
+
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={handleSaveAndClose}
+                disabled={updateItem.isPending || !title.trim()}
+                className="flex-1 rounded bg-[#1a1a1a] px-4 py-2 text-sm font-semibold text-gray-300 transition hover:bg-[#222] disabled:opacity-50"
+              >
+                {updateItem.isPending ? "Saving..." : "Save"}
+              </button>
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="rounded bg-[#0f0f0f] px-4 py-2 text-sm font-semibold text-gray-500 transition hover:bg-[#141414] hover:text-gray-400"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 
