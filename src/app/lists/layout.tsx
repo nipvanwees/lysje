@@ -1,8 +1,6 @@
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { Logo } from "~/app/_components/logo";
-import { auth } from "~/server/better-auth";
 import { getSession } from "~/server/better-auth/server";
 import { HydrateClient } from "~/trpc/server";
 import { ListsLayoutClient } from "~/app/_components/lists-layout-client";
@@ -27,22 +25,6 @@ export default async function ListsLayout({
             <Logo className="text-gray-100 hidden" />
             <h1 className="text-xl font-bold text-gray-100 md:text-3xl">Lysje</h1>
           </>
-        }
-        signOutButton={
-          <form>
-            <button
-              className="rounded px-3 py-1.5 text-sm text-gray-400 transition hover:text-gray-200"
-              formAction={async () => {
-                "use server";
-                await auth.api.signOut({
-                  headers: await headers(),
-                });
-                redirect("/login");
-              }}
-            >
-              Sign out
-            </button>
-          </form>
         }
       >
         {children}

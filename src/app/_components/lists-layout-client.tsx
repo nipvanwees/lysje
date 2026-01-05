@@ -6,11 +6,10 @@ import { MobileMenuButton } from "~/app/_components/mobile-menu-button";
 
 interface ListsLayoutClientProps {
   headerContent: React.ReactNode;
-  signOutButton: React.ReactNode;
   children: React.ReactNode;
 }
 
-export function ListsLayoutClient({ headerContent, signOutButton, children }: ListsLayoutClientProps) {
+export function ListsLayoutClient({ headerContent, children }: ListsLayoutClientProps) {
   return (
     <main className="flex min-h-screen flex-col bg-[#0a0a0a]">
       <SidebarProvider>
@@ -20,7 +19,6 @@ export function ListsLayoutClient({ headerContent, signOutButton, children }: Li
               <MobileMenuButton />
               {headerContent}
             </div>
-            {signOutButton}
           </div>
           <div className="relative flex h-full gap-6">
             <TodoListSidebar />

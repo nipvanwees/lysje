@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
 import { useSidebar } from "~/app/_components/sidebar-provider";
+import { authClient } from "~/server/better-auth/client";
 
 export function TodoListSidebar() {
   const pathname = usePathname();
@@ -133,7 +134,7 @@ export function TodoListSidebar() {
             );
           })}
         </div>
-        <div className="pt-4 border-t border-[#252525]">
+        <div className="pt-4 border-t border-[#252525] space-y-1">
           <Link
             href="/settings"
             onClick={handleLinkClick}
@@ -148,11 +149,34 @@ export function TodoListSidebar() {
               <span className="text-sm font-semibold">Settings</span>
             </div>
           </Link>
+          <SignOutButton />
         </div>
           </>
         )}
       </div>
     </>
+  );
+}
+
+function SignOutButton() {
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    await authClient.signOut();
+    router.push("/login");
+    router.refresh();
+  };
+
+  return (
+    <button
+      onClick={handleSignOut}
+      className="block w-full rounded px-3 py-2 text-left text-sm text-gray-400 transition hover:bg-[#141414] hover:text-gray-300"
+    >
+      <div className="flex items-center gap-2">
+        <span className="text-lg">🚪</span>
+        <span className="font-semibold">Sign out</span>
+      </div>
+    </button>
   );
 }
 
