@@ -24,8 +24,8 @@ export default async function ListsLayout({
       <ListsLayoutClient
         headerContent={
           <>
-            <Logo className="text-gray-100" />
-            <h1 className="text-xl font-bold text-gray-100 md:text-3xl">My Todo Lists</h1>
+            <Logo className="text-gray-100 hidden" />
+            <h1 className="text-xl font-bold text-gray-100 md:text-3xl">Lysje</h1>
           </>
         }
         signOutButton={
