@@ -1241,25 +1241,58 @@ function TodoItemModal({
           className="w-full max-w-2xl rounded-lg border border-[#1f1f1f] bg-[#141414] p-4 sm:p-6 shadow-xl my-auto"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="mb-4 flex items-start justify-between gap-4">
-            <div className="flex items-center gap-3 flex-1">
-              <input
-                type="checkbox"
-                checked={item.done}
-                onChange={(e) => {
-                  e.stopPropagation();
-                  onToggle();
-                }}
-                className="h-5 w-5 shrink-0 cursor-pointer rounded border-[#333] bg-[#0f0f0f] text-gray-400 focus:ring-0"
-              />
-              <h3 className="text-xl font-bold text-gray-100">Edit Item</h3>
-            </div>
+          <div className="mb-4 flex items-center justify-end gap-3">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggle();
+              }}
+              className={`shrink-0 rounded p-2.5 transition ${
+                item.done
+                  ? "bg-[#1a1a1a] text-gray-400 hover:bg-[#222] hover:text-gray-300 border border-[#333]"
+                  : "bg-green-600 text-white hover:bg-green-700 border border-green-500"
+              }`}
+              title={item.done ? "Mark as Incomplete" : "Mark as Complete"}
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-5 h-5"
+              >
+                <path
+                  d="M16.667 5L7.5 14.167 3.333 10"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
             <button
               onClick={handleDelete}
               disabled={isDeleting}
-              className="shrink-0 rounded px-3 py-1.5 text-sm text-red-500 transition hover:bg-[#1a1a1a] hover:text-red-400 disabled:opacity-50"
+              className="shrink-0 rounded p-2.5 bg-red-600 text-white hover:bg-red-700 border border-red-500 transition disabled:opacity-50"
+              title="Delete"
             >
-              {isDeleting ? "Deleting..." : "Delete"}
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className={`w-5 h-5 ${isDeleting ? "animate-spin" : ""}`}
+              >
+                <path
+                  d="M3.333 5h13.334M8.333 8.333v5M11.667 8.333v5M4.167 5l.833 10c0 .92.746 1.667 1.667 1.667h6.666c.92 0 1.667-.746 1.667-1.667l.833-10M7.5 5V3.333c0-.92.746-1.667 1.667-1.667h1.666c.92 0 1.667.746 1.667 1.667V5"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </button>
           </div>
 
